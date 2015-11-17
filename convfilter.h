@@ -1,5 +1,5 @@
 /*
- * fits.h
+ * convfilter.h
  *
  * Copyright 2015 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,36 +19,35 @@
  * MA 02110-1301, USA.
  */
 #pragma once
-#ifndef __FITS_H__
-#define __FITS_H__
+#ifndef __GRADIENT_H__
+#define __GRADIENT_H__
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <fitsio.h>
 #include "types.h"
+#include "fits.h"
 
-/*
-cfitsio.h BITPIX code values for FITS image types:
-#define BYTE_IMG      8
-#define SHORT_IMG    16
-#define LONG_IMG     32
-#define LONGLONG_IMG 64
-#define FLOAT_IMG   -32
-#define DOUBLE_IMG  -64
-*/
+// FilterType
+typedef enum{
+	 LAPGAUSS			// laplasian of gaussian
+	,GAUSS				// gaussian
+	,SOBELH				// Sobel horizontal
+	,SOBELV				// -//- vertical
+	,SIMPLEGRAD			// simple gradient (by Sobel)
+	,PREWITTH			// Prewitt (horizontal) - simple derivative
+	,PREWITTV			// -//- (vertical)
+	,SCHARRH			// Scharr (modified Sobel)
+	,SCHARRV
+	,STEP				// "posterisation"
+} FType;
 
 typedef struct{
-	int width;			// width
-	int height;			// height
-	int dtype;			// data type
-	double *data;		// picture data
-	char **keylist;		// list of options for each key
-	size_t keynum;		// full number of keys (size of *keylist)
-} IMAGE;
+	FType FilterType;	// filter type
+	int w;				// filter width
+	int h;				// height
+	double sx;			// x half-width
+	double sy;			// y half-width (sx, sy - for Gaussian-type filters)
+} Filter;
 
-void imfree(IMAGE **ima);
-bool readFITS(char *filename, IMAGE **fits);
-bool writeFITS(char *filename, IMAGE *fits);
-IMAGE *similarFITS(IMAGE *in, int dtype);
+IMAGE *DiffFilter(IMAGE *img, Filter *f);
+IMAGE *GradFilterSimple(IMAGE *img);
 
-#endif // __FITS_H__
+#endif // __GRADIENT_H__

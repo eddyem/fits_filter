@@ -23,6 +23,8 @@
 #include "usefull_macros.h"
 #include "fits.h"
 #include "median.h"
+#include "convfilter.h"
+#include "linfilter.h"
 
 void signals(int signo){
 	exit(signo);
@@ -36,11 +38,17 @@ int main(int argc, char **argv){
 	if(!readFITS(argv[1], &fits))
 		ERR(_("Can't read input file!"));
 	DBG("ima: %dx%d", fits->width, fits->height);
-	//s = fits->width * fits->height;
-	//double *img = fits->data;
-	//for(i = 0; i < s; ++i) *img++ /= 2.;
+//	Item _U_ min, max, mean, std, med;
+//	get_statictics(fits, &min, &max, &mean, &std, &med);
 	unlink(argv[2]);
-	IMAGE *newfits = get_adaptive_median(fits, atoi(argv[3]));
+	//IMAGE *newfits = get_adaptive_median(fits, atoi(argv[3]));
+	//Filter f = {PREWITTH, 200, 200, atoi(argv[3]), atoi(argv[3])};
+	//IMAGE *newfits = DiffFilter(fits, &f);
+	//IMAGE *newfits = GradFilterSimple(fits);
+	Filter f = {STEP, atoi(argv[3]), POW, 0, 0};
+	Item *levels;
+	IMAGE *newfits = StepFilter(fits, &f, &levels);
+	FREE(levels);
 	newfits->keylist = fits->keylist;
 	newfits->keynum = fits->keynum;
 	writeFITS(argv[2], newfits);

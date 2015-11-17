@@ -1,5 +1,5 @@
 /*
- * fits.h
+ * types.h
  *
  * Copyright 2015 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,36 +19,30 @@
  * MA 02110-1301, USA.
  */
 #pragma once
-#ifndef __FITS_H__
-#define __FITS_H__
+#ifndef __TYPES_H__
+#define __TYPES_H__
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <fitsio.h>
-#include "types.h"
+#ifndef THREAD_NUMBER
+	#define THREAD_NUMBER 4		// default - 4 threads
+#endif
 
-/*
-cfitsio.h BITPIX code values for FITS image types:
-#define BYTE_IMG      8
-#define SHORT_IMG    16
-#define LONG_IMG     32
-#define LONGLONG_IMG 64
-#define FLOAT_IMG   -32
-#define DOUBLE_IMG  -64
-*/
+#ifndef DBL_EPSILON
+#define DBL_EPSILON        2.2204460492503131e-16
+#endif
 
-typedef struct{
-	int width;			// width
-	int height;			// height
-	int dtype;			// data type
-	double *data;		// picture data
-	char **keylist;		// list of options for each key
-	size_t keynum;		// full number of keys (size of *keylist)
-} IMAGE;
+typedef double Item;
+// ITM_EPSILON is for data comparing, set it to zero for integer types
+#define ITM_EPSILON  DBL_EPSILON
 
-void imfree(IMAGE **ima);
-bool readFITS(char *filename, IMAGE **fits);
-bool writeFITS(char *filename, IMAGE *fits);
-IMAGE *similarFITS(IMAGE *in, int dtype);
+#define OMP_NUM_THREADS THREAD_NUMBER
+#define Stringify(x) #x
+#define OMP_FOR(x) _Pragma(Stringify(omp parallel for x))
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#endif
+#ifndef MIN
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#endif
 
-#endif // __FITS_H__
+#endif // __TYPES_H__
+

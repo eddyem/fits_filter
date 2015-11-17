@@ -40,14 +40,6 @@
 // largest radius for adaptive median filter - 7x7 pix
 #define LARGEST_ADPMED_RADIUS  (3)
 
-#ifndef DBL_EPSILON
-#define DBL_EPSILON        2.2204460492503131e-16
-#endif
-
-#define OMP_NUM_THREADS 4
-#define Stringify(x) #x
-#define OMP_FOR(x) _Pragma(Stringify(omp parallel for x))
-
 #define ELEM_SWAP(a, b) {register Item t = a; a = b; b = t;}
 #define PIX_SORT(a, b)  {if (p[a] > p[b]) ELEM_SWAP(p[a], p[b]);}
 Item opt_med3(Item *p){
@@ -112,12 +104,19 @@ Item opt_med25(Item *p){
 	PIX_SORT(12, 20); PIX_SORT(10, 20); PIX_SORT(10, 12) ;
 	return (p[12]);
 }
-/*
-Item quick_select(Item **arr, int n){
+#undef PIX_SORT
+#undef ELEM_SWAP
+#define ELEM_SWAP(a, b) {register Item t = a; a = b; b = t;}
+#define PIX_SORT(a, b)  {if (a > b) ELEM_SWAP(a, b);}
+/**
+ * quick select - algo for approximate median calculation for array idata of size n
+ */
+Item quick_select(Item *idata, int n){
 	int low, high;
 	int median;
 	int middle, ll, hh;
-	float ret;
+	Item *arr = MALLOC(Item, n);
+	memcpy(arr, idata, n*sizeof(Item));
 	low = 0 ; high = n-1 ; median = (low + high) / 2;
 	for(;;){
 		if(high <= low) // One element only
@@ -137,8 +136,8 @@ Item quick_select(Item **arr, int n){
 		ll = low + 1;
 		hh = high;
 		for(;;){
-			do ll++; while (*arr[low] > *arr[ll]);
-			do hh--; while (*arr[hh] > *arr[low]);
+			do ll++; while (arr[low] > arr[ll]);
+			do hh--; while (arr[hh] > arr[low]);
 			if(hh < ll) break;
 			ELEM_SWAP(arr[ll], arr[hh]) ;
 		}
@@ -148,12 +147,13 @@ Item quick_select(Item **arr, int n){
 		if (hh <= median) low = ll;
 		if (hh >= median) high = hh - 1;
 	}
-	ret = *arr[median];
+	Item ret = arr[median];
+	FREE(arr);
 	return ret;
 }
 #undef PIX_SORT
 #undef ELEM_SWAP
-*/
+
 
 
 
@@ -293,52 +293,20 @@ Item MediatorStat(Mediator* m, Item *minval, Item *maxval){
 	return v;
 }
 
-/**
- * median by cross 3x3 pixels (5 pixels total)
- */
-static void get_median_cross(IMAGE *img, IMAGE *out){
-	size_t w = img->width, h = img->height;
-	Item *med = out->data, *inputima = img->data;
-#ifdef EBUG
-	double t0 = dtime();
-#endif
-	OMP_FOR(shared(inputima, med))
-	for(size_t x = 1; x < w - 1; ++x){
-		size_t xx, xm = w + x + 2, y, ymax, xmin = xm - 3;
-		Mediator* m = MediatorNew(5);
-		// initial fill
-		MediatorInsert(m, inputima[x]); // (x,0)
-		for(xx = xmin; xx < xm; ++xx) // (line with y = 1)
-			MediatorInsert(m, inputima[xx]);
-		ymax = h - 1;
-		xx = x + 2 * w;
-		size_t medidx = x + w;
-		for(y = 1; y < ymax; ++y, xx += w, medidx += w){
-			MediatorInsert(m, inputima[xx]);
-			med[medidx] = MediatorMedian(m);
-		}
-		free(m);
-	}
-	DBG("time for median filtering by cross 3x3 of image %zdx%zd: %gs", w, h,
-		dtime() - t0);
-}
+static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp);
+
 /**
  * filter image by median (seed*2 + 1) x (seed*2 + 1)
  */
 IMAGE *get_median(IMAGE *img, int seed){
 	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(int);
-	IMAGE *out = MALLOC(IMAGE, 1);
-	Item *med = MALLOC(Item, bufsiz), *inputima = img->data;
-	out->data = med;
-	out->width = w;
-	out->height = h;
-	out->dtype = img->dtype;
-
-	memcpy(med, inputima, bufsiz);
+	IMAGE *out = similarFITS(img, img->dtype);
+	Item *med = out->data, *inputima = img->data;
 	if(seed == 0){
-		get_median_cross(img, out);
+		get_adp_median_cross(img, out, 0);
 		return out;
 	}
+	memcpy(med, inputima, bufsiz);
 
 	size_t blksz = seed * 2 + 1, fullsz = blksz * blksz;
 #ifdef EBUG
@@ -374,43 +342,219 @@ IMAGE *get_median(IMAGE *img, int seed){
  * PROBLEM: bounds
  */
 static Item adp_med_5by5(IMAGE *img, size_t x, size_t y){
-	size_t w = img->width;
-	Item arr[25], *arrptr = arr, *dataptr = &img->data[x + (y - 2) * w];
-	for(int yy = 0; yy < 5; ++yy, dataptr += w, arrptr += 5)
-		memcpy(arrptr, dataptr, 5*sizeof(Item));
+	size_t blocklen, w = img->width, h = img->height, yy, _2w = 2 * w;
+	Item arr[25], *arrptr = arr, *dataptr, *currpix;
+	int position = ((x < 1) ? 1 : 0)        // left columns
+				 + ((x > w - 2) ? 2 : 0)    // right columns
+				 + ((y < 1) ? 4 : 0)        // top rows
+				 + ((y > w - 2) ? 8 : 0);   // bottom rows
+	/* Now by value of "position" we know where is the point:
+	 ***************************
+	 * 5 *        4        * 6 *
+	 ***************************
+	 *   *                 *   *
+	 *   *                 *   *
+	 * 1 *        0        * 2 *
+	 *   *                 *   *
+	 *   *                 *   *
+	 ***************************
+	 * 9 *        8        *10 *
+	 ***************************/
+	currpix = &img->data[x + y * w]; // pointer to current pixel
+	dataptr = currpix - _2w - 2;     // pointer to left upper corner of 5x5 square
+	inline void copy5times(Item val){
+		for(int i = 0; i < 5; ++i) *arrptr++ = val;
+	}
+	inline void copy9times(Item val){
+		for(int i = 0; i < 9; ++i) *arrptr++ = val;
+	}
+	void copycolumn(Item *startpix){
+		for(int i = 0; i < 5; ++i, startpix += w) *arrptr++ = *startpix;
+	}
+	inline void copyvertblock(size_t len){
+		for(int i = 0; i < 5; ++i, dataptr += w, arrptr += len)
+			memcpy(arrptr, dataptr, len * sizeof(Item));
+	}
+	inline void copyhorblock(size_t len){
+		for(size_t i = 0; i < len; ++i, dataptr += w, arrptr += 5)
+			memcpy(arrptr, dataptr, 5 * sizeof(Item));
+	}
+	inline void copyblock(){
+		for(size_t i = 0; i < 4; ++i, dataptr += w, arrptr += 4)
+			memcpy(arrptr, dataptr, 4 * sizeof(Item));
+	}
+	switch(position){
+		case 1: // left
+			copy5times(*currpix); // make 5 copies of current pixel
+			if(x == 0){ // copy 1st column too
+				dataptr += 2;
+				copycolumn(dataptr);
+				blocklen = 3;
+			}else{ // 2nd column - no copy need
+				++dataptr;
+				blocklen = 4;
+			}
+			copyvertblock(blocklen);
+		break;
+		case 2: // right
+			copy5times(*currpix);
+			if(x == w - 1){ // copy last column too
+				copycolumn(dataptr + 2);
+				blocklen = 3;
+			}else{ // 2nd column - no copy need
+				blocklen = 4;
+			}
+			copyvertblock(blocklen);
+		break;
+		case 4: // top
+			copy5times(*currpix);
+			if(y == 0){
+				dataptr += _2w;
+				memcpy(arrptr, dataptr, 5 * sizeof(Item));
+				blocklen = 3;
+			}else{
+				dataptr += w;
+				blocklen = 4;
+			}
+			copyhorblock(blocklen);
+		break;
+		case 8: // bottom
+			copy5times(*currpix);
+			if(y == h - 1){
+				memcpy(arrptr, dataptr + _2w, 5 * sizeof(Item));
+				blocklen = 3;
+			}else{
+				blocklen = 4;
+			}
+			copyhorblock(blocklen);
+		break;
+		case 5: // top left corner: in all corners we just copy 4x4 square & 9 times this pixel
+			copy9times(*currpix);
+			dataptr = img->data;
+			copyblock();
+		break;
+		case 6: // top right corner
+			copy9times(*currpix);
+			dataptr = &img->data[w - 4];
+			copyblock();
+		break;
+		case 9: // bottom left cornet
+			copy9times(*currpix);
+			dataptr = &img->data[(y - 4) * w];
+			copyblock();
+		break;
+		case 10: // bottom right cornet
+			copy9times(*currpix);
+			dataptr = &img->data[(y - 3) * w - 4];
+			copyblock();
+		break;
+		default:  // 0
+			for(yy = 0; yy < 5; ++yy, dataptr += w, arrptr += 5)
+				memcpy(arrptr, dataptr, 5*sizeof(Item));
+	}
 	return opt_med25(arr);
 }
 
-static void get_adp_median_cross(IMAGE *img, IMAGE *out){
+/**
+ * Adaptive median by cross 3x3
+ * We have 5 datapoints and 4 inserts @ each step, so
+ * better to use opt_med5 instead of Mediator
+ * @param adp == 1 for adaptive filtering
+ */
+static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp){
 	size_t w = img->width, h = img->height;
-	Item *med = out->data, *inputima = img->data;
+	Item *med = out->data, *inputima = img->data, *iptr;
 #ifdef EBUG
 	double t0 = dtime();
 #endif
 	OMP_FOR(shared(inputima, med))
 	for(size_t x = 1; x < w - 1; ++x){
-		size_t xx, xm = w + x + 2, y, ymax, xmin = xm - 3;
-		Mediator* m = MediatorNew(5);
-		// initial fill
-		MediatorInsert(m, inputima[x]); // (x,0)
-		for(xx = xmin; xx < xm; ++xx) // (line with y = 1)
-			MediatorInsert(m, inputima[xx]);
-		ymax = h - 1;
-		xx = x + 2 * w;
-		size_t medidx = x + w;
-		for(y = 1; y < ymax; ++y, xx += w, medidx += w){
-			MediatorInsert(m, inputima[xx]);
-			Item s, l, md, I = inputima[medidx];
-			md = MediatorStat(m, &s, &l);
-			s += DBL_EPSILON, l -= DBL_EPSILON;
-			if(s < md && md < l){
-				if(s < I && I < l) med[medidx] = I;
-				else med[medidx] = md;
-			}else{
-				med[medidx] = adp_med_5by5(img, x, y);
-			}
+		Item buffer[5];
+		size_t curpix = x + w, // index of current pixel image arrays
+			y, ymax = h - 1;
+		for(y = 1; y < ymax; ++y, curpix += w){
+			Item s, l, md, *I = &inputima[curpix], Ival = *I;
+			memcpy(buffer, I - 1, 3*sizeof(Item));
+			buffer[3] = I[-w]; buffer[4] = I[w];
+			md = opt_med5(buffer);
+			s = ITM_EPSILON + MIN(buffer[0], buffer[1]);
+			l = MAX(buffer[3], buffer[4]) - ITM_EPSILON;
+			if(adp){
+				if(s < md && md < l){
+					if(s < Ival && Ival < l) med[curpix] = Ival;
+					else med[curpix] = md;
+				}else{
+					med[curpix] = adp_med_5by5(img, x, y);
+				}
+			}else
+				med[curpix] = Ival;
 		}
-		free(m);
+	}
+	// process corners (without adaptive)
+	Item buf[5];
+	// left top
+	buf[0] = inputima[0]; buf[1] = inputima[0];
+	buf[2] = inputima[1]; buf[3] = inputima[w];
+	buf[4] = inputima[w + 1];
+	med[0] = opt_med5(buf);
+	// right top
+	iptr = &inputima[w - 1];
+	buf[0] = iptr[0]; buf[1] = iptr[0];
+	buf[2] = iptr[-1]; buf[3] = iptr[w - 1];
+	buf[4] = iptr[w];
+	med[0] = opt_med5(buf);
+	// left bottom
+	iptr = &inputima[(h - 1) * w];
+	buf[0] = iptr[0]; buf[1] = iptr[0];
+	buf[2] = iptr[-w]; buf[3] = iptr[1 - w];
+	buf[4] = iptr[1];
+	med[0] = opt_med5(buf);
+	// right bottom
+	iptr = &inputima[h * w - 1];
+	buf[0] = iptr[0]; buf[1] = iptr[0];
+	buf[2] = iptr[-w-1]; buf[3] = iptr[-w];
+	buf[4] = iptr[-1];
+	med[0] = opt_med5(buf);
+	// process borders without corners
+	// top
+	OMP_FOR(shared(med))
+	for(size_t x = 1; x < w - 1; ++x){
+		Item *iptr = &inputima[x];
+		buf[0] = buf[1] = *iptr;
+		buf[2] = iptr[-1]; buf[3] = iptr[2];
+		buf[4] = iptr[w];
+		med[x] = opt_med5(buf);
+	}
+	// bottom
+	size_t curidx = (h-2)*w;
+	OMP_FOR(shared(curidx, med))
+	for(size_t x = 1; x < w - 1; --x){
+		Item *iptr = &inputima[curidx + x];
+		buf[0] = buf[1] = *iptr;
+		buf[2] = iptr[-w]; buf[3] = iptr[-1];
+		buf[4] = iptr[1];
+		med[curidx + x] = opt_med5(buf);
+	}
+	// left
+	OMP_FOR(shared(med))
+	for(size_t y = 1; y < h - 1; ++y){
+		size_t cur = y * w;
+		Item *iptr = &inputima[cur];
+		buf[0] = buf[1] = *iptr;
+		buf[2] = iptr[-w]; buf[3] = iptr[1];
+		buf[4] = iptr[w];
+		med[cur] = opt_med5(buf);
+	}
+	// right
+	curidx = w - 1;
+	OMP_FOR(shared(curidx, med))
+	for(size_t y = 1; y < h - 1; ++y){
+		size_t cur = curidx + y * w;
+		Item *iptr = &inputima[cur];
+		buf[0] = buf[1] = *iptr;
+		buf[2] = iptr[-w]; buf[3] = iptr[-1];
+		buf[4] = iptr[w];
+		med[cur] = opt_med5(buf);
 	}
 	DBG("time for median filtering by cross 3x3 of image %zdx%zd: %gs", w, h,
 		dtime() - t0);
@@ -419,21 +563,14 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out){
  * filter image by median (seed*2 + 1) x (seed*2 + 1)
  */
 IMAGE *get_adaptive_median(IMAGE *img, int seed){
-	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(int);
-	IMAGE *out = MALLOC(IMAGE, 1);
-	Item *med = MALLOC(Item, bufsiz), *inputima = img->data;
-	out->data = med;
-	out->width = w;
-	out->height = h;
-	out->dtype = img->dtype;
-
+	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(Item);
+	IMAGE *out = similarFITS(img, img->dtype);
+	Item *med = out->data, *inputima = img->data;
 	memcpy(med, inputima, bufsiz);
-
 	if(seed == 0){
-		get_adp_median_cross(img, out);
+		get_adp_median_cross(img, out, 1);
 		return out;
 	}
-
 	size_t blksz = seed * 2 + 1, fullsz = blksz * blksz;
 #ifdef EBUG
 	double t0 = dtime();
@@ -456,12 +593,15 @@ IMAGE *get_adaptive_median(IMAGE *img, int seed){
 				MediatorInsert(m, inputima[xx]);
 			Item s, l, md, I = inputima[curpos];
 			md = MediatorStat(m, &s, &l);
-			s += DBL_EPSILON, l -= DBL_EPSILON;
+			s += ITM_EPSILON, l -= ITM_EPSILON;
 			if(s < md && md < l){
 				if(s < I && I < l) med[curpos] = I;
 				else med[curpos] = md;
 			}else{
-				med[curpos] = adp_med_5by5(img, x, y);
+				if(seed > LARGEST_ADPMED_RADIUS)
+					med[curpos] = I;
+				else
+					med[curpos] = adp_med_5by5(img, x, y);
 			}
 		}
 		free(m);

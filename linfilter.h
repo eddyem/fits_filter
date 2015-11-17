@@ -1,5 +1,5 @@
 /*
- * fits.h
+ * linfilter.h
  *
  * Copyright 2015 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,36 +19,24 @@
  * MA 02110-1301, USA.
  */
 #pragma once
-#ifndef __FITS_H__
-#define __FITS_H__
+#ifndef __LINFILTER_H__
+#define __LINFILTER_H__
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <fitsio.h>
 #include "types.h"
+#include "fits.h"
+#include "convfilter.h"
 
-/*
-cfitsio.h BITPIX code values for FITS image types:
-#define BYTE_IMG      8
-#define SHORT_IMG    16
-#define LONG_IMG     32
-#define LONGLONG_IMG 64
-#define FLOAT_IMG   -32
-#define DOUBLE_IMG  -64
-*/
+// f->h for STEP filter
+typedef enum{
+	 UNIFORM
+	,LOG
+	,EXP
+	,SQRT
+	,POW
+} StepType;
 
-typedef struct{
-	int width;			// width
-	int height;			// height
-	int dtype;			// data type
-	double *data;		// picture data
-	char **keylist;		// list of options for each key
-	size_t keynum;		// full number of keys (size of *keylist)
-} IMAGE;
+void get_statictics(IMAGE *img, Item *min, Item *max,
+					Item *mean, Item *std, Item *med);
+IMAGE *StepFilter(IMAGE *img, Filter *f, Item **scale);
 
-void imfree(IMAGE **ima);
-bool readFITS(char *filename, IMAGE **fits);
-bool writeFITS(char *filename, IMAGE *fits);
-IMAGE *similarFITS(IMAGE *in, int dtype);
-
-#endif // __FITS_H__
+#endif // __LINFILTER_H__

@@ -1,5 +1,5 @@
 PROGRAM = fitsread
-LDFLAGS = -lcfitsio
+LDFLAGS = -lcfitsio -lfftw3 -lfftw3_threads -lm
 SRCS = $(wildcard *.c)
 CC = gcc
 DEFINES = -D_XOPEN_SOURCE=1111 -DEBUG

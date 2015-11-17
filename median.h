@@ -23,10 +23,10 @@
 #define __MEDIAN_H__
 
 #include "fits.h"
-
-typedef double Item;
+#include "types.h"
 
 IMAGE *get_median(IMAGE *img, int seed);
 IMAGE *get_adaptive_median(IMAGE *img, int seed);
+Item quick_select(Item *idata, int n);
 
 #endif // __MEDIAN_H__

@@ -21,7 +21,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <fitsio.h>
 
 #include "fits.h"
 #include "usefull_macros.h"
@@ -158,4 +157,17 @@ bool writeFITS(char *filename, IMAGE *fits){
 	TRYFITS(fits_write_img, fp, TDOUBLE, 1, sz, fits->data);
 	TRYFITS(fits_close_file, fp);
 	return TRUE;
+}
+
+/**
+ * create a copy of image "in" without headers, assign data type to "dtype"
+ */
+IMAGE *similarFITS(IMAGE *img, int dtype){
+	size_t w = img->width, h = img->height, bufsiz = w*h*sizeof(int);
+	IMAGE *out = MALLOC(IMAGE, 1);
+	out->data = MALLOC(Item, bufsiz);
+	out->width = w;
+	out->height = h;
+	out->dtype = dtype;
+	return out;
 }
