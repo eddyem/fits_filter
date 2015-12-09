@@ -21,6 +21,8 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <errno.h>
 
 #include "fits.h"
 #include "usefull_macros.h"
@@ -170,4 +172,30 @@ IMAGE *similarFITS(IMAGE *img, int dtype){
 	out->height = h;
 	out->dtype = dtype;
 	return out;
+}
+
+/*
+ * Different file functions
+ */
+/**
+ * Return TRUE if file _name_ not exists
+ */
+bool file_absent(char *name){
+	struct stat filestat;
+	if(!stat(name, &filestat)) return FALSE;
+	if(errno == ENOENT) return TRUE;
+	return FALSE;
+}
+/**
+ * find the first non-exists filename like prefixXXXX.suffix & put it into buff
+ */
+char* make_filename(char *buff, size_t buflen, char *prefix, char *suffix){
+	int num;
+	for(num = 1; num < 10000; ++num){
+		if(snprintf(buff, buflen, "%s_%04d.%s", prefix, num, suffix) < 1)
+			return NULL;
+		if(file_absent(buff)) // OK, file not exists
+			return buff;
+	}
+	return NULL;
 }

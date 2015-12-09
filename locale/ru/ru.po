@@ -1,0 +1,186 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid   ""
+msgstr  "Project-Id-Version: PACKAGE VERSION\n"
+        "Report-Msgid-Bugs-To: \n"
+        "POT-Creation-Date: 2015-12-09 17:50+0300\n"
+        "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+        "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+        "Language-Team: LANGUAGE <LL@li.org>\n"
+        "Language: \n"
+        "MIME-Version: 1.0\n"
+        "Content-Type: text/plain; charset=koi8-r\n"
+        "Content-Transfer-Encoding: 8bit\n"
+
+#. / "%s: необходим аргумент!"
+#: /home/eddy/tmp/fits_adp_median/parceargs.c:420
+#, c-format
+msgid   "%s: argument needed!"
+msgstr  "%s: необходим аргумент!"
+
+#. / "Все 9999 файлов вида %sXXXX.fits заняты!"
+#: /home/eddy/tmp/fits_adp_median/main.c:55
+#, c-format
+msgid   "All 9999 files like %sXXXX.fits exists!"
+msgstr  ""
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:181
+msgid   "Can't close mmap'ed file"
+msgstr  "Не могу закрыть ммапнутый файл"
+
+#. Get settings
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:283
+msgid   "Can't get settings"
+msgstr  "Невозможно получить настройки"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:190
+msgid   "Can't munmap"
+msgstr  "Не могу сделать munmap"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:175
+#, c-format
+msgid   "Can't open %s for reading"
+msgstr  "Не могу прочитать %s"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:77
+msgid   "Can't read HDU"
+msgstr  "Не могу прочесть HDU"
+
+#. "Невозможно прочесть входной файл!"
+#: /home/eddy/tmp/fits_adp_median/main.c:71
+msgid   "Can't read input file!"
+msgstr  "Входной файл нечитаем"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:97
+msgid   "Can't realloc"
+msgstr  "Не могу сделать reallok"
+
+#. / "Не могу удалить файл %s"
+#: /home/eddy/tmp/fits_adp_median/main.c:61
+#, fuzzy, c-format
+msgid   "Can't remove file %s"
+msgstr  "Не могу закрыть ммапнутый файл"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:293
+msgid   "Can't set settings"
+msgstr  "Не могу сохранить настройки"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:214
+msgid   "Can't setup console"
+msgstr  "Не могу нсатроить консоль,"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:177
+#, c-format
+msgid   "Can't stat %s"
+msgstr  "Не могу прочесть параметры %s"
+
+#: /home/eddy/tmp/fits_adp_median/convfilter.c:240
+msgid   "FFTW error"
+msgstr  "Ошибка FFTW"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:122
+#, c-format
+msgid   "Found %d pixels with undefined value"
+msgstr  "Обнаружено %d пикселей с неопределенным значением"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:84
+msgid   "Images with > 2 dimensions are not supported"
+msgstr  "Многомерные изображения не поддерживаются"
+
+#. / "Целое вне допустимого диапазона"
+#: /home/eddy/tmp/fits_adp_median/parceargs.c:86
+msgid   "Integer out of range"
+msgstr  "Целое вне допустимого диапазона"
+
+#. / "Не задано имя входного файла"
+#: /home/eddy/tmp/fits_adp_median/main.c:46
+msgid   "Missed input file name!"
+msgstr  "Не задано имя входного файла"
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:180
+msgid   "Mmap error for input"
+msgstr  ""
+
+#: /home/eddy/tmp/fits_adp_median/usefull_macros.c:173
+msgid   "No filename given!"
+msgstr  "Не задано имя файла"
+
+#. / "Задайте имя выходного файла (-o) или его префикс (без ключа)"
+#: /home/eddy/tmp/fits_adp_median/main.c:51
+msgid   "Set output file name (-o) or its prefix (without key)"
+msgstr  ""
+
+#. / "Выходной файл существует"
+#: /home/eddy/tmp/fits_adp_median/main.c:64
+#, fuzzy
+msgid   "The output file exists"
+msgstr  "входной файл"
+
+#. "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:226
+#, fuzzy, c-format
+msgid   "Usage: %s [args] [outfile prefix]\n"
+        "\n"
+        "\tWhere args are:\n"
+msgstr  "Использование: %s [аргументы]\n"
+        "\n"
+        "\tГде аргументы:\n"
+
+#. / "Неправильный аргумент \"%s\" параметра \"%s\""
+#: /home/eddy/tmp/fits_adp_median/parceargs.c:425
+#, c-format
+msgid   "Wrong argument \"%s\" of parameter \"%s\""
+msgstr  "Неправильный аргумент \"%s\" параметра \"%s\""
+
+#. amount of pcount and/or scount wrong
+#. / "Неправильный формат строки помощи"
+#: /home/eddy/tmp/fits_adp_median/parceargs.c:56
+msgid   "Wrong helpstring!"
+msgstr  "Неправильный формат строки помощи"
+
+#. / "Неправильный параметр: %s"
+#: /home/eddy/tmp/fits_adp_median/parceargs.c:415
+#, c-format
+msgid   "Wrong parameter: %s"
+msgstr  "Неправильный параметр: %s"
+
+#. / "входной файл"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:72
+msgid   "input file"
+msgstr  "входной файл"
+
+#. / "выходной файл"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:74
+#, fuzzy
+msgid   "output file"
+msgstr  "входной файл"
+
+#. / "перезаписать выходной файл, если он существует (только с опцией -i)"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:76
+msgid   "rewrite output file if exists (works only with option -i)"
+msgstr  ""
+
+#. / "отобразить эту справку"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:70
+msgid   "show this help"
+msgstr  "отобразить эту справку"
+
+#: /home/eddy/tmp/fits_adp_median/convfilter.c:65
+msgid   "sigma_x is too low, set to 1."
+msgstr  "sigma_x слишком мала, устанавливаю в 1."
+
+#: /home/eddy/tmp/fits_adp_median/convfilter.c:69
+msgid   "sigma_y is too low, set to 1."
+msgstr  "sigma_x слишком мала, устанавливаю в 1."
+
+#. / "уровень подробностей вывода (каждый -v увеличивает его)"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:78
+msgid   "verbose level (each -v increase it)"
+msgstr  ""
+
+#~ msgid        "Usage: %s infile outfile num"
+#~ msgstr       "Использование: %s <входной файл> <выходной файл> <число>"

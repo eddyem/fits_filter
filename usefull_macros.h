@@ -68,8 +68,8 @@
  */
 extern int globErr;
 extern void signals(int sig);
-#define ERR(...) do{globErr=errno; _WARN(__VA_ARGS__); signals(0);}while(0)
-#define ERRX(...) do{globErr=0; _WARN(__VA_ARGS__); signals(0);}while(0)
+#define ERR(...) do{globErr=errno; _WARN(__VA_ARGS__); signals(9);}while(0)
+#define ERRX(...) do{globErr=0; _WARN(__VA_ARGS__); signals(9);}while(0)
 #define WARN(...) do{globErr=errno; _WARN(__VA_ARGS__);}while(0)
 #define WARNX(...) do{globErr=0; _WARN(__VA_ARGS__);}while(0)
 

@@ -51,4 +51,8 @@ bool readFITS(char *filename, IMAGE **fits);
 bool writeFITS(char *filename, IMAGE *fits);
 IMAGE *similarFITS(IMAGE *in, int dtype);
 
+extern struct stat filestat;
+char* make_filename(char *buff, size_t buflen, char *prefix, char *suffix);
+bool file_absent(char *name);
+
 #endif // __FITS_H__
