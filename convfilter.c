@@ -211,7 +211,7 @@ Item *build_S_filter(int size, Filter *f){
  * Output:
  * Returns NULL on error or converted image
  */
-IMAGE *DiffFilter(IMAGE *img, Filter *f){
+IMAGE *DiffFilter(IMAGE *img, Filter *f, _U_ Itmarray *u){
 	int ssize;
 	static int fftw_ini = 0;
 	int sizex = img->width, sizey = img->height;
@@ -316,15 +316,15 @@ IMAGE *DiffFilter(IMAGE *img, Filter *f){
  * Simple gradient filter based on two Sobel filters
  * output = sqrt(SobelH(input)^2+SobelV(input)^2)
  */
-IMAGE *GradFilterSimple(IMAGE *img){
+IMAGE *GradFilterSimple(IMAGE *img, _U_ Filter *fu, _U_ Itmarray *u){
 	#ifdef EBUG
 	double t0 = dtime();
 	#endif
 	Filter f;
 	f.FilterType = SOBELH;
-	IMAGE *horiz = DiffFilter(img, &f);
+	IMAGE *horiz = DiffFilter(img, &f, NULL);
 	f.FilterType = SOBELV;
-	IMAGE *vert = DiffFilter(img, &f);
+	IMAGE *vert = DiffFilter(img, &f, NULL);
 	int w = img->width, h = img->height;
 	double *dst1 = horiz->data, *dst2 = vert->data;
 	OMP_FOR(shared(dst1, dst2))

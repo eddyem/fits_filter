@@ -298,7 +298,8 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp);
 /**
  * filter image by median (seed*2 + 1) x (seed*2 + 1)
  */
-IMAGE *get_median(IMAGE *img, int seed){
+IMAGE *get_median(IMAGE *img, Filter *f, _U_ Itmarray *i){
+	int seed = f->w;
 	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(int);
 	IMAGE *out = similarFITS(img, img->dtype);
 	Item *med = out->data, *inputima = img->data;
@@ -562,7 +563,8 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp){
 /**
  * filter image by median (seed*2 + 1) x (seed*2 + 1)
  */
-IMAGE *get_adaptive_median(IMAGE *img, int seed){
+IMAGE *get_adaptive_median(IMAGE *img, Filter *f, _U_ Itmarray *i){
+	int seed = f->w;
 	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(Item);
 	IMAGE *out = similarFITS(img, img->dtype);
 	Item *med = out->data, *inputima = img->data;

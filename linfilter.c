@@ -78,7 +78,7 @@ void get_statictics(IMAGE *img, Item *min, Item *max,
  * Output:
  * 		scale - a pointer to array (allocated in this function)
  */
-void fillIsoScale(Filter *f, Item **scale, Item min, Item wd){
+void fillIsoScale(Filter *f, Itmarray *scale, Item min, Item wd){
 	int M = f->w, y;
 	Item (*scalefn)(Item in);
 	Item step, Nsteps = (Item)f->w; // amount of intervals
@@ -97,7 +97,8 @@ void fillIsoScale(Filter *f, Item **scale, Item min, Item wd){
 	Item Spow(Item in){
 		return min + step*in*in;
 	}
-	*scale = MALLOC(Item, M);
+	scale->data = MALLOC(Item, M);
+	scale->size = M;
 	switch(f->h){
 		case LOG:
 			scalefn = Slog; step = wd / log(Nsteps + 1.);
@@ -114,9 +115,10 @@ void fillIsoScale(Filter *f, Item **scale, Item min, Item wd){
 		default:
 			scalefn = Suniform; step = wd/Nsteps;
 	}
+	Item *ar = scale->data;
 	for(y = 0; y < M; y++){
-		(*scale)[y] = scalefn(y+1);
-		DBG("level %d: I=%g", y+1, (*scale)[y]);
+		ar[y] = scalefn(y+1);
+		DBG("level %d: I=%g", y+1, ar[y]);
 	}
 }
 /*
@@ -132,8 +134,12 @@ void fillIsoScale(Filter *f, Item **scale, Item min, Item wd){
  *
  * TODO: save the result in the char, not float; learn display function
  */
-IMAGE *StepFilter(IMAGE *img, Filter *f, double **scale){
-	if(f->w < 2 || f->w > 255) return FALSE;
+IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
+	if(f->w < 2 || f->w > 255){
+		// "Неправильное количество уровней: %d"
+		WARNX(_("Wrong levels amount: %d"), f->w);
+		return NULL;
+	}
 	Item Nsteps = (Item)f->w; // amount of intervals
 	Item step, max, min;
 	get_statictics(img, &min, &max, NULL, NULL, NULL);

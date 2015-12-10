@@ -37,6 +37,6 @@ typedef enum{
 
 void get_statictics(IMAGE *img, Item *min, Item *max,
 					Item *mean, Item *std, Item *med);
-IMAGE *StepFilter(IMAGE *img, Filter *f, Item **scale);
+IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale);
 
 #endif // __LINFILTER_H__

@@ -33,12 +33,13 @@ typedef struct{
 	char *outfile;					// output file name
 	int rest_pars_num;				// amount of "free" parameters
 	char **rest_pars;				// array of those parameters
+	char **conv;					// conversion pipeline parameters
 } glob_pars;
 
 
 // default & global parameters
 extern glob_pars const Gdefault;
-extern int rewrite_ifexists, verbose_level;
+extern int rewrite_ifexists, verbose_level, show_stat;
 glob_pars G;
 
 glob_pars *parce_args(int argc, char **argv);

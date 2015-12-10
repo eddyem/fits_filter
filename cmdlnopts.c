@@ -37,7 +37,8 @@ int help;
 glob_pars G;
 
 int rewrite_ifexists = 0, // rewrite existing files == 0 or 1
-	verbose_level = 0;    // each -v increments this value, e.g. -vvv sets it to 3
+	verbose_level = 0,    // each -v increments this value, e.g. -vvv sets it to 3
+	show_stat = 0;        // show statistic parameters of input and output image
 //            DEFAULTS
 // default global parameters
 glob_pars const Gdefault = {
@@ -45,6 +46,7 @@ glob_pars const Gdefault = {
 	,NULL		// outfile
 	,0			// rest_pars_num
 	,NULL		// rest_pars
+	,NULL		// conv
 };
 
 /*
@@ -56,11 +58,11 @@ const char MirPar[] = "set mirror parameters, arg=[diam=num:foc=num:Zincl=ang:Ai
 		"\t\tfoc   - mirror focus ratio\n" \
 		"\t\tZincl - inclination from Z axe\n" \
 		"\t\tAincl - azimuth of inclination";
-
-const char FilPar[] = "set filter parameters, arg=[type=type:xsz=num:ysz=num]\n" \
-		"\t\ttype     - filter type(med, lap, lg)\n" \
-		"\t\txsz,ysz  - area size (default is 3x3)";
 */
+const char FilPar[] = "set pipeline parameters, arg: type=type:[help]:...\n" \
+		"\t\ttype - transformation type (help for list)\n" \
+		"\t\thelp - list of available parameters for given 'type'";
+
 /*
  * Define command line options by filling structure:
  *	name	has_arg	flag	val		type		argptr			help
@@ -72,10 +74,14 @@ myoption cmdlnopts[] = {
 	{"infile",	NEED_ARG,	NULL,	'i',	arg_string,	APTR(&G.infile),	N_("input file")},
 	/// "выходной файл"
 	{"outfile",	NEED_ARG,	NULL,	'o',	arg_string,	APTR(&G.outfile),	N_("output file")},
+	/// "установить параметры конвейера, arg: type=type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - справка по параметрам типа"
+	{"conveyer",MULT_PAR,	NULL,	'c',	arg_string,	APTR(&G.conv),		N_(FilPar)},
 	/// "перезаписать выходной файл, если он существует (только с опцией -i)"
 	{"rewrite",	NO_ARGS,	&rewrite_ifexists,1,arg_none,NULL,				N_("rewrite output file if exists (works only with option -i)")},
 	/// "уровень подробностей вывода (каждый -v увеличивает его)"
 	{"verbose",	NO_ARGS,	NULL,	'v',	arg_none,	APTR(&verbose_level),N_("verbose level (each -v increase it)")},
+	/// "отобразить статистические параметры входного и выходного изображения"
+	{"stat",	NO_ARGS,	NULL,	's',	arg_int,	APTR(&show_stat),	N_("show statistic parameters of input and output image")},
 	end_option
 };
 

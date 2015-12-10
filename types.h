@@ -21,6 +21,7 @@
 #pragma once
 #ifndef __TYPES_H__
 #define __TYPES_H__
+#include "fits.h"
 
 #ifndef THREAD_NUMBER
 	#define THREAD_NUMBER 4		// default - 4 threads
@@ -29,6 +30,7 @@
 #ifndef DBL_EPSILON
 #define DBL_EPSILON        2.2204460492503131e-16
 #endif
+
 
 typedef double Item;
 // ITM_EPSILON is for data comparing, set it to zero for integer types
@@ -43,6 +45,40 @@ typedef double Item;
 #ifndef MIN
 #define MIN(x,y) ((x) < (y) ? (x) : (y))
 #endif
+
+// FilterType (not only convolution!)
+typedef enum{
+	FILTER_NONE = 0		// simple start
+	,MEDIAN				// median filter
+	,ADPT_MEDIAN		// simple adaptive median
+	,LAPGAUSS			// laplasian of gaussian
+	,GAUSS				// gaussian
+	,SOBELH				// Sobel horizontal
+	,SOBELV				// -//- vertical
+	,SIMPLEGRAD			// simple gradient (by Sobel)
+	,PREWITTH			// Prewitt (horizontal) - simple derivative
+	,PREWITTV			// -//- (vertical)
+	,SCHARRH			// Scharr (modified Sobel)
+	,SCHARRV
+	,STEP				// "posterisation"
+} FType;
+
+typedef struct{
+	Item *data;
+	size_t size;
+}Itmarray;
+
+typedef struct _Filter{
+	FType FilterType;	// filter type
+	int w;				// filter width
+	int h;				// height
+	double sx;			// x half-width
+	double sy;			// y half-width (sx, sy - for Gaussian-type filters)
+	IMAGE* (*imfunc)(IMAGE *in, struct _Filter *f, Itmarray *i);	// image function for given conversion type
+} Filter;
+
+// pointer to image conversion function
+typedef IMAGE* (*imfuncptr)(IMAGE *in, Filter *f, Itmarray *i);
 
 #endif // __TYPES_H__
 

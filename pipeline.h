@@ -1,5 +1,5 @@
 /*
- * convfilter.h
+ * pipeline.h
  *
  * Copyright 2015 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,13 +19,13 @@
  * MA 02110-1301, USA.
  */
 #pragma once
-#ifndef __GRADIENT_H__
-#define __GRADIENT_H__
+#ifndef __PIPELINE_H__
+#define __PIPELINE_H__
 
-#include "types.h"
+#include <stdbool.h>
 #include "fits.h"
 
-IMAGE *DiffFilter(IMAGE *img, Filter *f, Itmarray *u);
-IMAGE *GradFilterSimple(IMAGE *img, Filter *f, Itmarray *u);
+bool get_pipeline_params();
+IMAGE* process_pipeline(IMAGE *image);
 
-#endif // __GRADIENT_H__
+#endif // __PIPELINE_H__

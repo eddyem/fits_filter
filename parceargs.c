@@ -371,6 +371,7 @@ bool get_suboption(char *str, mysuboption *opt){
 			default:
 			case arg_none:
 				if(soptr->argptr) *((int*)aptr) += 1; // increment value
+				result = TRUE;
 			break;
 			case arg_int:
 				result = myatoll(aptr, val, arg_int);
@@ -417,12 +418,12 @@ bool get_suboption(char *str, mysuboption *opt){
 		}
 		if(noarg && opt[idx].has_arg == NEED_ARG){
 			/// "%s: необходим аргумент!"
-			printf(_("%s: argument needed!"), tok);
+			WARNX(_("%s: argument needed!"), tok);
 			goto returning;
 		}
 		if(!opt_setarg(opt, idx, val)){
 			/// "Неправильный аргумент \"%s\" параметра \"%s\""
-			printf(_("Wrong argument \"%s\" of parameter \"%s\""), val, tok);
+			WARNX(_("Wrong argument \"%s\" of parameter \"%s\""), val, tok);
 			goto returning;
 		}
 	}while((tok = strtok_r(NULL, ":,", &tmpbuf)));

@@ -25,6 +25,7 @@
 #include <errno.h>
 
 #include "fits.h"
+#include "types.h"
 #include "usefull_macros.h"
 
 static int fitsstatus = 0;
@@ -97,13 +98,13 @@ bool readFITS(char *filename, IMAGE **fits){
 			ERR(_("Can't realloc"));
 		}
 		char **currec = &(img->keylist[oldnkeys]);
-		DBG("HDU # %d of %d keys", i, nkeys);
+	//	DBG("HDU # %d of %d keys", i, nkeys);
 		for(j = 1; j <= nkeys; ++j){
 			FITSFUN(fits_read_record, fp, j, card);
 			if(!fitsstatus){
 				*currec = MALLOC(char, FLEN_CARD);
 				memcpy(*currec, card, FLEN_CARD);
-				DBG("key %d: %s", oldnkeys + j, *currec);
+		//		DBG("key %d: %s", oldnkeys + j, *currec);
 				++currec;
 			}
 		}
@@ -162,15 +163,29 @@ bool writeFITS(char *filename, IMAGE *fits){
 }
 
 /**
- * create a copy of image "in" without headers, assign data type to "dtype"
+ * create an empty copy of image "in" without headers, assign data type to "dtype"
  */
 IMAGE *similarFITS(IMAGE *img, int dtype){
-	size_t w = img->width, h = img->height, bufsiz = w*h*sizeof(int);
+	size_t w = img->width, h = img->height, bufsiz = w*h;
 	IMAGE *out = MALLOC(IMAGE, 1);
 	out->data = MALLOC(Item, bufsiz);
 	out->width = w;
 	out->height = h;
 	out->dtype = dtype;
+	return out;
+}
+
+/**
+ * make full copi of image 'in'
+ */
+IMAGE *copyFITS(IMAGE *in){
+	IMAGE *out = similarFITS(in, in->dtype);
+	memcpy(out->data, in->data, sizeof(Item)*in->width*in->height);
+	size_t i, n = in->keynum;
+	out->keynum = n;
+	out->keylist = MALLOC(char*, n);
+	for(i = 0; i < n; ++i)
+		out->keylist[i] = strdup(in->keylist[i]);
 	return out;
 }
 

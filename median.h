@@ -25,8 +25,8 @@
 #include "fits.h"
 #include "types.h"
 
-IMAGE *get_median(IMAGE *img, int seed);
-IMAGE *get_adaptive_median(IMAGE *img, int seed);
+IMAGE *get_median(IMAGE *img, Filter *f, Itmarray *i);
+IMAGE *get_adaptive_median(IMAGE *img, Filter *f, Itmarray *i);
 Item quick_select(Item *idata, int n);
 
 #endif // __MEDIAN_H__

@@ -26,6 +26,7 @@
 #include "convfilter.h"
 #include "linfilter.h"
 #include "cmdlnopts.h"
+#include "pipeline.h"
 
 #ifndef BUFF_SIZ
 #define BUFF_SIZ 4096
@@ -36,7 +37,8 @@ void signals(int signo){
 }
 
 int main(int argc, char **argv){
-	IMAGE *fits;
+	IMAGE *fits = NULL, *newfit = NULL;
+	bool pipe_needed = FALSE;
 	char buff[BUFF_SIZ];
 	//size_t i, s;
 	initial_setup();
@@ -65,24 +67,47 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-
+	// pre-check pipeline parameters
+	if(G.conv){
+		pipe_needed = get_pipeline_params();
+	}
 	if(!readFITS(G.infile, &fits)){
 		// "Невозможно прочесть входной файл!"
 		ERR(_("Can't read input file!"));
 	}
 	DBG("ima: %dx%d", fits->width, fits->height);
-//	Item _U_ min, max, mean, std, med;
-//	get_statictics(fits, &min, &max, &mean, &std, &med);
 
+	if(show_stat){
+		Item min, max, mean, std, med;
+		get_statictics(fits, &min, &max, &mean, &std, &med);
+		// "Статистика по входному изображению:\n"
+		green(_("Input image statistics:\n"));
+		printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
+				min, max, mean, std, med);
+	}
+
+	if(pipe_needed)
+		newfit = process_pipeline(fits);
+
+	if(show_stat && newfit){
+		Item min, max, mean, std, med;
+		get_statictics(newfit, &min, &max, &mean, &std, &med);
+		// "Статистика по изображению после конвейера:\n"
+		green(_("Image statistics after pipeline:\n"));
+		printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
+				min, max, mean, std, med);
+	}
+	writeFITS(G.outfile, newfit);
+/*
 	IMAGE *newfit = get_median(fits, 2);
 	Filter f = {LAPGAUSS, 200, 200, atoi(argv[3]), atoi(argv[3])};
 	IMAGE *newf = DiffFilter(newfit, &f);
 	Filter f1 = {STEP, 3, LOG, 0, 0};
 	IMAGE *newfits = StepFilter(newf, &f1, NULL);
-/*
-	IMAGE *newfit = get_median(fits, atoi(argv[3]));
-	IMAGE *newfits = GradFilterSimple(newfit);
-*/
+
+	//IMAGE *newfit = get_median(fits, atoi(argv[3]));
+	//IMAGE *newfits = GradFilterSimple(newfit);
+
 	//Filter f = {STEP, atoi(argv[3]), POW, 0, 0};
 	//Item *levels;
 	//IMAGE *newfits = StepFilter(fits, &f, &levels);
@@ -92,5 +117,6 @@ int main(int argc, char **argv){
 	writeFITS(G.outfile, newfits);
 	imfree(&fits);
 	FREE(newfits->data); FREE(newfits);
+	*/
 	return 0;
 }
