@@ -51,24 +51,40 @@ typedef struct{
 	imfuncptr imfunc;  // function called for this type of conversion
 } ftypename;
 
-char* lgargs = "sx,sy\tsigma by axes x & y\nw,h\tnon-zero window width & height";
-char* noneargs = "arguments are absent";
-char* medargs = "r\tradius of filter (uint, 0 for cross 3x3)";
-char* stepargs = "nsteps\tamount of steps\nscale\tscale type (uniform, log, exp, sqrt, pow)";
+/// "sx,sy\tпараметр сигма по осям x и y\nw,h\tширина и высота ненулевого окна фильтра"
+char* lgargs = N_("sx,sy\tsigma by axes x & y\nw,h\tnon-zero window width & height");
+/// "аргументы отсутствуют"
+char* noneargs = N_("arguments are absent");
+/// "r\tрадиус фильтра (беззнаковое целое или 0 для \"креста\" 3x3)"
+char* medargs = N_("r\tradius of filter (uint, 0 for cross 3x3)");
+/// "nsteps\tколичество градаций яркости\nscale\tфункция преобразования (uniform, log, exp, sqrt, pow)"
+char* stepargs = N_("nsteps\tamount of steps\nscale\tscale type (uniform, log, exp, sqrt, pow)");
 
 ftypename filter_names[] = {
-	{MEDIAN,    "median",    "median filter", &medargs, get_median},
-	{ADPT_MEDIAN,"adpmed",   "simple adaptive median filter", &medargs, get_adaptive_median},
-	{LAPGAUSS,  "lapgauss",  "laplassian of gaussian", &lgargs, DiffFilter},
-	{GAUSS,     "gauss",     "gaussian", &lgargs, DiffFilter},
-	{SOBELH,    "sobelh",    "horizontal Sobel", &noneargs, DiffFilter},
-	{SOBELV,    "sobelv",    "vertical Sobel", &noneargs, DiffFilter},
-	{SIMPLEGRAD,"simplegrad","simple gradient (by Sobel)", &noneargs, GradFilterSimple},
-	{PREWITTH,  "prewitth",  "Prewitt horizontal - simple derivative", &noneargs, DiffFilter},
-	{PREWITTV,  "prewittv",  "Prewitt vertical", &noneargs, DiffFilter},
-	{SCHARRH,   "scharrh",   "Scharr (modified Sobel) horizontal", &noneargs, DiffFilter},
-	{SCHARRV,   "scharrv",   "Scharr vertical", &noneargs, DiffFilter},
-	{STEP,      "step",      "posterisation", &stepargs, StepFilter},
+	/// "медианный фильтр"
+	{MEDIAN,    "median",    N_("median filter"), &medargs, get_median},
+	/// "простой адаптивный медианный фильтр"
+	{ADPT_MEDIAN,"adpmed",   N_("simple adaptive median filter"), &medargs, get_adaptive_median},
+	/// "лапласиан гауссианы"
+	{LAPGAUSS,  "lapgauss",  N_("laplasian of gaussian"), &lgargs, DiffFilter},
+	/// "гауссов фильтр"
+	{GAUSS,     "gauss",     N_("gaussian"), &lgargs, DiffFilter},
+	/// "горизонтальный фильтр Собеля"
+	{SOBELH,    "sobelh",    N_("horizontal Sobel"), &noneargs, DiffFilter},
+	/// "вертикальный фильтр Собеля"
+	{SOBELV,    "sobelv",    N_("vertical Sobel"), &noneargs, DiffFilter},
+	/// "простой градиент (операторами Собеля)"
+	{SIMPLEGRAD,"simplegrad",N_("simple gradient (by Sobel)"), &noneargs, GradFilterSimple},
+	/// "горизонтальный фильтр Прюитта (простейшая производная)"
+	{PREWITTH,  "prewitth",  N_("Prewitt horizontal - simple derivative"), &noneargs, DiffFilter},
+	/// "вертикальный фильтр Прюитта"
+	{PREWITTV,  "prewittv",  N_("Prewitt vertical"), &noneargs, DiffFilter},
+	/// "горизонтальный фильтр Щарра (модифицированный Собель)"
+	{SCHARRH,   "scharrh",   N_("Scharr (modified Sobel) horizontal"), &noneargs, DiffFilter},
+	/// "вертикальный фильтр Щарра"
+	{SCHARRV,   "scharrv",   N_("Scharr vertical"), &noneargs, DiffFilter},
+	/// "\"постеризация\""
+	{STEP,      "step",      N_("posterisation"), &stepargs, StepFilter},
 	{FILTER_NONE, NULL, NULL, NULL, NULL}
 };
 
@@ -88,7 +104,7 @@ stepscalespairs scales[] = {
 
 void show_pipeline_pars(){
 	int i = 0;
-	/// "п÷п╟я─п╟п╪п╣я┌я─я▀ п╨п╬п╫п╡п╣п╧п╣я─п╟: %s"
+	/// "Параметры конвейера:\n"
 	red(_("Pipeline parameters:\n"));
 	while(filter_names[i].parname){
 		printf("\t%-12s %s\n", filter_names[i].parname, filter_names[i].descr);
@@ -98,13 +114,13 @@ void show_pipeline_pars(){
 }
 
 void showparhelp(int idx){
-	/// "п÷я─п╣п╬п╠я─п╟п╥п╬п╡п╟п╫п╦п╣ %s: %s\n"
-	red(_("Conversion %s <%s> parameters:\n"), filter_names[idx].parname, filter_names[idx].descr);
-	printf("%s\n", *filter_names[idx].arguments);
+	/// "Преобразование %s: %s\n"
+	red(_("Conversion %s <%s> parameters:\n"), filter_names[idx].parname, _(filter_names[idx].descr));
+	printf("%s\n", _(*filter_names[idx].arguments));
 	signals(9);
 }
 
-Filter *parce_filter(char *pars){
+Filter *parse_filter(char *pars){
 	Filter *fltr;
 	int idx = -1;
 	pipepars popts;
@@ -131,7 +147,7 @@ Filter *parce_filter(char *pars){
 		return NULL;
 	}else{
 		if(!popts.ftype){ // no type given
-			/// "п²п╣п╬п╠я┘п╬п╢п╦п╪п╬ п©п╬ п╨я─п╟п╧п╫п╣п╧ п╪п╣я─п╣ п╥п╟п╢п╟я┌я▄ п©п╟я─п╟п╪п╣я┌я─ 'type', п╫п╟п©я─п╦п╪п╣я─: '-c type=help'"
+			/// "Необходимо по крайней мере задать параметр 'type', например: '-c type=help'"
 			ERRX(_("You should at least give parameter 'type', for example: '-c type=help'"));
 		}
 		DBG("type: %s", popts.ftype);
@@ -147,7 +163,7 @@ Filter *parce_filter(char *pars){
 			++i;
 		}
 		if(idx == -1){ // wrong type
-			/// "п²п╣п©я─п╟п╡п╦п╩я▄п╫я▀п╧ п©п╟я─п╟п╪п╣я┌я─ 'type' п╨п╬п╫п╡п╣п╧п╣я─п╟"
+			/// "Неправильный параметр 'type' конвейера"
 			WARNX(_("Wrong pipeline 'type' parameter: %s"), popts.ftype);
 			show_pipeline_pars();
 		}
@@ -165,31 +181,31 @@ Filter *parce_filter(char *pars){
 	}else if(popts.imfunc ==  DiffFilter &&
 			(fltr->FilterType == LAPGAUSS || fltr->FilterType == GAUSS)){
 		if(popts.xsz < 5){
-			// "п╗п╦я─п╦п╫п╟ я└п╦п╩я▄я┌я─п╟ п╦п╥п╪п╣п╫п╣п╫п╟ п╫п╟ 5"
+			// "Ширина фильтра изменена на 5"
 			WARNX(_("Filter window width changed to 5"));
 			popts.xsz = 5;
 		}
 		if(popts.ysz < 5){
-			// "п▓я▀я│п╬я┌п╟ я└п╦п╩я▄я┌я─п╟ п╦п╥п╪п╣п╫п╣п╫п╟ п╫п╟ 5"
+			// "Высота фильтра изменена на 5"
 			WARNX(_("Filter window height changed to 5"));
 			popts.ysz = 5;
 		}
 		if(popts.xhw < 1. || popts.yhw < 1.){
-			/// "п÷п╬п╩я┐я┬п╦я─п╦п╫п╟ я└п╦п╩я▄я┌я─п╟ п╢п╬п╩п╤п╫п╟ п╠я▀я┌я▄ п╫п╣ п╪п╣п╫я▄я┬п╣ 1."
+			/// "Полуширина фильтра должна быть не меньше 1."
 			ERRX(_("Filter FWHM should be not less than 1."));
 		}
 		fltr->w = popts.xsz; fltr->h = popts.ysz;
 		fltr->sx = popts.xhw; fltr->sy = popts.yhw;
 	}else if(popts.imfunc ==  StepFilter){ // check levels & type
 		if(popts.xsz < 2 || popts.xsz > 255){
-			/// "п п╬п╩п╦я┤п╣я│я┌п╡п╬ я┐я─п╬п╡п╫п╣п╧ пЁя─п╟п╢п╟я├п╦п╧ я▐я─п╨п╬я│я┌п╦ п╢п╬п╩п╤п╫п╬ п╠я▀я┌я▄ п╬я┌ 2 п╢п╬ 255"
+			/// "Количество уровней градаций яркости должно быть от 2 до 255"
 			ERRX(_("Brightness levels amount shoul be from 2 to 255"));
 		}
 		fltr->w = popts.xsz;
 		int i = 0, idx = -1;
 		DBG("name: %s", popts.scale);
 		if(!popts.scale){
-			/// "п²п╣ я┐п╨п╟п╥п╟п╫ п©п╟я─п╟п╪п╣я┌я─ scale"
+			/// "Не указан параметр scale"
 			ERRX(_("You should set 'scale' parameter"));
 		}
 		while(scales[i].name){
@@ -199,7 +215,7 @@ Filter *parce_filter(char *pars){
 			++i;
 		}
 		if(idx == -1){
-			/// "п÷п╟я─п╟п╪п╣я┌я─я▀ я└п╦п╩я▄я┌я─п╟ п©п╬я│я┌п╣я─п╦п╥п╟я├п╦п╦ п╢п╬п╩п╤п╫я▀ п╠я▀я┌я▄ я┌п╟п╨п╦п╪п╦: %s"
+			/// "Параметры фильтра постеризации должны быть такими:\n%s"
 			ERRX(_("Posterisation filter parameters should be:\n%s"), stepargs);
 		}
 		DBG("idx: %d", idx);
@@ -227,8 +243,8 @@ bool get_pipeline_params(){
 	p = G.conv;
 	for(i = 0; i < N; ++i, ++p){
 		DBG("filter: %s", *p);
-		if(!(f = parce_filter(*p))){
-			/// "п²п╣п©я─п╟п╡п╦п╩я▄п╫п╬ п╥п╟п╢п╟п╫я▀ п©п╟я─п╟п╪п╣я┌я─я▀ п╨п╬п╫п╡п╣п╧п╣я─п╟"
+		if(!(f = parse_filter(*p))){
+			/// "Неправильно заданы параметры конвейера"
 			ERRX(_("Wrong pipeline parameters!"));
 		}
 		farray[i] = f;
@@ -238,11 +254,11 @@ bool get_pipeline_params(){
 
 IMAGE *process_pipeline(IMAGE *image){
 	if(!image){
-		/// "п²п╣ п╥п╟п╢п╟п╫п╬ п╡я┘п╬п╢п╫п╬п╣ п╦п╥п╬п╠я─п╟п╤п╣п╫п╦п╣"
+		/// "Не задано входное изображение"
 		ERRX(_("No input image given"));
 	}
 	if(!farray || !farray_size){
-		/// "п²п╣ п╥п╟п╢п╟п╫я▀ п©п╟я─п╟п╪п╣я┌я─я▀ п╨п╬п╫п╡п╣п╧п╣я─п╟"
+		/// "Не заданы параметры конвейера"
 		WARNX(_("No pipeline parameters given"));
 	}
 	size_t i;
@@ -251,6 +267,7 @@ IMAGE *process_pipeline(IMAGE *image){
 	char **keylist_ori = image->keylist;
 	size_t keylist_sz = image->keynum;
 	IMAGE *processed = NULL;
+	DBG("here");
 	for(i = 0; i < farray_size; ++i, ++far){
 		Filter *f = *far;
 		DBG("Got filter #%d: w=%d, h=%d, sx=%g, sy=%g\n", f->FilterType,
@@ -258,7 +275,7 @@ IMAGE *process_pipeline(IMAGE *image){
 		printf("try filter %zd\n", i);
 		Itmarray oarg = {NULL, 0};
 		processed = f->imfunc(in, f, &oarg);
-		/// "п·я┬п╦п╠п╨п╟ п╡ п╬п╠я─п╟п╠п╬я┌п╨п╣ п╨п╬п╫п╡п╣п╧п╣я─п╟"
+		/// "Ошибка в обработке конвейера"
 		if(!processed) ERRX(_("Error on pipeline processing!"));
 		// TODO: what should I do with oarg???
 		if(oarg.size){
@@ -273,9 +290,11 @@ IMAGE *process_pipeline(IMAGE *image){
 		imfree(&in);
 		in = processed;
 	}
+	DBG("here");
 	processed->keylist = MALLOC(char*, keylist_sz);
 	for(i = 0; i < keylist_sz; ++i)
 		processed->keylist[i] = strdup(keylist_ori[i]);
+	processed->keynum = keylist_sz;
 	return processed;
 }
 

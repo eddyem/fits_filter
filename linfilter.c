@@ -136,7 +136,7 @@ void fillIsoScale(Filter *f, Itmarray *scale, Item min, Item wd){
  */
 IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
 	if(f->w < 2 || f->w > 255){
-		// "п²п╣п©я─п╟п╡п╦п╩я▄п╫п╬п╣ п╨п╬п╩п╦я┤п╣я│я┌п╡п╬ я┐я─п╬п╡п╫п╣п╧: %d"
+		// "Неправильное количество уровней: %d"
 		WARNX(_("Wrong levels amount: %d"), f->w);
 		return NULL;
 	}
@@ -185,7 +185,7 @@ IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
 			stepfn = Funiform;
 			step = wd/Nsteps;
 	}
-	IMAGE *out = similarFITS(img, SHORT_IMG);
+	IMAGE *out = similarFITS(img, BYTE_IMG);
 	Item *res = out->data, *inputima = img->data;
 	size_t sizex = img->width, sizey = img->height;
 	OMP_FOR(shared(res, inputima))

@@ -1,5 +1,5 @@
 /*
- * parceargs.c - parcing command line arguments & print help
+ * parseargs.c - parsing command line arguments & print help
  *
  * Copyright 2013 Edward V. Emelianoff <eddy@sao.ru>
  *
@@ -28,7 +28,7 @@
 #include <limits.h> // INT_MAX & so on
 #include <libintl.h>// gettext
 #include <ctype.h>	// isalpha
-#include "parceargs.h"
+#include "parseargs.h"
 #include "usefull_macros.h"
 
 char *helpstring = "%s\n";
@@ -183,7 +183,7 @@ void *get_aptr(void *paptr, argtype type){
 
 
 /**
- * Parce command line arguments
+ * Parse command line arguments
  * ! If arg is string, then value will be strdup'ed!
  *
  * @param argc (io) - address of argc of main(), return value of argc stay after `getopt`
@@ -194,7 +194,7 @@ void *get_aptr(void *paptr, argtype type){
  *
  * @exit: in case of error this function show help & make `exit(-1)`
   */
-void parceargs(int *argc, char ***argv, myoption *options){
+void parseargs(int *argc, char ***argv, myoption *options){
 	char *short_options, *soptr;
 	struct option *long_options, *loptr;
 	size_t optsize, i;
@@ -294,6 +294,26 @@ void parceargs(int *argc, char ***argv, myoption *options){
 }
 
 /**
+ * compare function for qsort
+ * first - sort by short options; second - sort arguments without sort opts (by long options)
+ */
+static int argsort(const void *a1, const void *a2){
+	const myoption *o1 = (myoption*)a1, *o2 = (myoption*)a2;
+	const char *l1 = o1->name, *l2 = o2->name;
+	int s1 = o1->val, s2 = o2->val;
+	int *f1 = o1->flag, *f2 = o2->flag;
+	// check if both options has short arg
+	if(f1 == NULL && f2 == NULL){ // both have short arg
+		return (s1 - s2);
+	}else if(f1 != NULL && f2 != NULL){ // both don't have short arg - sort by long
+		return strcmp(l1, l2);
+	}else{ // only one have short arg -- return it
+		if(f2) return -1; // a1 have short - it is 'lesser'
+		else return 1;
+	}
+}
+
+/**
  * Show help information based on myoption->help values
  * @param oindex (i)  - if non-negative, show only help by myoption[oindex].help
  * @param options (i) - array of `myoption`
@@ -306,6 +326,7 @@ void showhelp(int oindex, myoption *options){
 	char buf[bufsz+1];
 	myoption *opts = options;
 	assert(opts);
+	DBG("hre");
 	assert(opts[0].name); // check whether there is at least one options
 	if(oindex > -1){ // print only one message
 		opts = &options[oindex];
@@ -331,7 +352,12 @@ void showhelp(int oindex, myoption *options){
 	}while((++opts)->name);
 	max_opt_len += 14; // format: '-S , --long[=arg]' - get addition 13 symbols
 	opts = options;
-	// Now print all help
+	// count amount of options
+	int N; for(N = 0; opts->name; ++N, ++opts);
+	if(N == 0) exit(-2);
+	// Now print all help (sorted)
+	opts = options;
+	qsort(opts, N, sizeof(myoption), argsort);
 	do{
 		int p = sprintf(buf, "  "); // a little indent
 		if(!opts->flag && isalpha(opts->val)) // .val is short argument
@@ -343,7 +369,8 @@ void showhelp(int oindex, myoption *options){
 			p += snprintf(buf+p, bufsz-p, "[=arg]");
 		assert(p < max_opt_len); // there would be magic if p >= max_opt_len
 		printf("%-*s%s\n", max_opt_len+1, buf, _(opts->help)); // write options & at least 2 spaces after
-	}while((++opts)->name);
+		++opts;
+	}while(--N);
 	printf("\n\n");
 	exit(-1);
 }

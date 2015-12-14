@@ -153,6 +153,7 @@ bool writeFITS(char *filename, IMAGE *fits){
 			else if(strncmp(rec, "NAXIS", 5) == 0 || strncmp(rec, "BITPIX", 6) == 0) // NAXIS, NAXISxxx, BITPIX
 				continue;
 			FITSFUN(fits_write_record, fp, rec);
+			DBG("write key: %s", rec);
 		}
 	}
 	FITSFUN(fits_write_record, fp, "COMMENT  modified by simple test routine");

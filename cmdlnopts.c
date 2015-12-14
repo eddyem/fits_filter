@@ -1,5 +1,5 @@
 /*
- * cmdlnopts.c - the only function that parce cmdln args and returns glob parameters
+ * cmdlnopts.c - the only function that parse cmdln args and returns glob parameters
  *
  * Copyright 2013 Edward V. Emelianoff <eddy@sao.ru>
  *
@@ -57,11 +57,11 @@ const char MirPar[] = "set mirror parameters, arg=[diam=num:foc=num:Zincl=ang:Ai
 		"\t\tdiam  - diameter of mirror\n" \
 		"\t\tfoc   - mirror focus ratio\n" \
 		"\t\tZincl - inclination from Z axe\n" \
-		"\t\tAincl - azimuth of inclination";
-*/
-const char FilPar[] = "set pipeline parameters, arg: type=type:[help]:...\n" \
+		"\t\tAincl - azimuth of inclination";*/
+/// "установить параметры конвейера, аргументы: type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - список доступных для данного 'type' опций"
+const char FilPar[] = N_("set pipeline parameters, arg: type=type:[help]:...\n" \
 		"\t\ttype - transformation type (help for list)\n" \
-		"\t\thelp - list of available parameters for given 'type'";
+		"\t\thelp - list of available parameters for given 'type'");
 
 /*
  * Define command line options by filling structure:
@@ -75,7 +75,7 @@ myoption cmdlnopts[] = {
 	/// "выходной файл"
 	{"outfile",	NEED_ARG,	NULL,	'o',	arg_string,	APTR(&G.outfile),	N_("output file")},
 	/// "установить параметры конвейера, arg: type=type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - справка по параметрам типа"
-	{"conveyer",MULT_PAR,	NULL,	'c',	arg_string,	APTR(&G.conv),		N_(FilPar)},
+	{"pipeline",MULT_PAR,	NULL,	'p',	arg_string,	APTR(&G.conv),		FilPar},
 	/// "перезаписать выходной файл, если он существует (только с опцией -i)"
 	{"rewrite",	NO_ARGS,	&rewrite_ifexists,1,arg_none,NULL,				N_("rewrite output file if exists (works only with option -i)")},
 	/// "уровень подробностей вывода (каждый -v увеличивает его)"
@@ -107,7 +107,8 @@ bool myatod(double *num, const char *str){
 	assert(str);
 	res = strtod(str, &endptr);
 	if(endptr == str || *str == '\0' || *endptr != '\0'){
-		printf("Wrong double number format!");
+		/// "Неправильный формат числа double!"
+		WARNX(_("Wrong double number format!"));
 		return FALSE;
 	}
 	*num = res;
@@ -135,7 +136,8 @@ bool get_radians(double *ret, char *str){
 		*ptr = 0; if(!myatod(&ftmp, str)) return FALSE;
 		ftmp = fabs(ftmp);
 		if(ftmp > 360.){
-			printf("Degrees should be less than 360");
+			/// "Угол должен быть меньше 360 градусов"
+			WARNX(_("Degrees should be less than 360"));
 			return FALSE;
 		}
 		val += ftmp;
@@ -218,20 +220,20 @@ bool get_mir_par(void *arg){
 }*/
 
 /**
- * Parce command line options and return dynamically allocated structure
+ * Parse command line options and return dynamically allocated structure
  * 		to global parameters
  * @param argc - copy of argc from main
  * @param argv - copy of argv from main
  * @return allocated structure with global parameters
  */
-glob_pars *parce_args(int argc, char **argv){
+glob_pars *parse_args(int argc, char **argv){
 	int i;
 	void *ptr;
 	ptr = memcpy(&G, &Gdefault, sizeof(G)); assert(ptr);
-	// "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
+	/// "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
 	change_helpstring(_("Usage: %s [args] [outfile prefix]\n\n\tWhere args are:\n"));
 	// parse arguments
-	parceargs(&argc, &argv, cmdlnopts);
+	parseargs(&argc, &argv, cmdlnopts);
 	if(help) showhelp(-1, cmdlnopts);
 	if(argc > 0){
 		G.rest_pars_num = argc;
