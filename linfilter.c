@@ -24,6 +24,16 @@
 #include "linfilter.h"
 #include "median.h"
 
+stepscalespairs scales[] = {
+	{UNIFORM, "uniform"},
+	{LOG,     "log"},
+	{EXP,     "exp"},
+	{SQRT,    "sqrt"},
+	{POW,     "pow"},
+	{0, NULL}
+};
+
+
 /**
  * calculate simple statistics by image
  * @param img (i) - input image
@@ -31,6 +41,7 @@
  */
 void get_statictics(IMAGE *img, Item *min, Item *max,
 					Item *mean, Item *std, Item *med){
+	if(!img) return;
 	size_t sz = img->width * img->height;
 	if(min || max || mean || std){
 		Item *idata = img->data;
@@ -184,6 +195,17 @@ IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
 		default: // I = Imin + step*N
 			stepfn = Funiform;
 			step = wd/Nsteps;
+	}
+	if(img->keylist){ // remove BZERO & BSCALE for given image format
+		char buf[80];
+		list_modify_key(img->keylist, "BZERO", "0");
+		list_modify_key(img->keylist, "BSCALE", "1");
+		list_modify_key(img->keylist, "DATAMIN", "0");
+		snprintf(buf, 21, "%d", f->w);
+		list_modify_key(img->keylist, "DATAMAX", buf);
+		snprintf(buf, 80, "COMMENT step filter with %d levels (%s distribution)",
+			f->w, scales[f->h].name);
+		list_add_record(&img->keylist, buf);
 	}
 	IMAGE *out = similarFITS(img, BYTE_IMG);
 	Item *res = out->data, *inputima = img->data;

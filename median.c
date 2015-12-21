@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "median.h"
 #include "usefull_macros.h"
@@ -42,9 +43,18 @@
 
 #define ELEM_SWAP(a, b) {register Item t = a; a = b; b = t;}
 #define PIX_SORT(a, b)  {if (p[a] > p[b]) ELEM_SWAP(p[a], p[b]);}
+
+Item opt_med2(Item *p){
+	return (p[0] + p[1]) * 0.5;
+}
 Item opt_med3(Item *p){
 	PIX_SORT(0, 1); PIX_SORT(1, 2); PIX_SORT(0, 1);
 	return(p[1]) ;
+}
+Item opt_med4(Item *p){
+	PIX_SORT(0, 2); PIX_SORT(1, 3);
+	PIX_SORT(0, 1); PIX_SORT(2, 3);
+	return(p[1] + p[2]) * 0.5;
 }
 Item opt_med5(Item *p){
 	PIX_SORT(0, 1); PIX_SORT(3, 4); PIX_SORT(0, 3);
@@ -52,12 +62,31 @@ Item opt_med5(Item *p){
 	PIX_SORT(1, 2);
 	return(p[2]) ;
 }
+// even values are from "FAST, EFFICIENT MEDIAN FILTERS WITH EVEN LENGTH WINDOWS", J.P. HAVLICEK, K.A. SAKADY, G.R.KATZ
+Item opt_med6(Item *p){
+	PIX_SORT(1, 2); PIX_SORT(3, 4);
+	PIX_SORT(0, 1); PIX_SORT(2, 3); PIX_SORT(4, 5);
+	PIX_SORT(1, 2); PIX_SORT(3, 4);
+	PIX_SORT(0, 1); PIX_SORT(2, 3); PIX_SORT(4, 5);
+	PIX_SORT(1, 2); PIX_SORT(3, 4);
+	return ( p[2] + p[3] ) * 0.5;
+}
 Item opt_med7(Item *p){
 	PIX_SORT(0, 5); PIX_SORT(0, 3); PIX_SORT(1, 6);
 	PIX_SORT(2, 4); PIX_SORT(0, 1); PIX_SORT(3, 5);
 	PIX_SORT(2, 6); PIX_SORT(2, 3); PIX_SORT(3, 6);
 	PIX_SORT(4, 5); PIX_SORT(1, 4); PIX_SORT(1, 3);
-	PIX_SORT(3, 4); return (p[3]) ;
+	PIX_SORT(3, 4); return (p[3]);
+}
+// optimal Batcher's sort for 8 elements (http://myopen.googlecode.com/svn/trunk/gtkclient_tdt/include/fast_median.h)
+Item opt_med8(Item *p){
+	PIX_SORT(0, 4); PIX_SORT(1, 5); PIX_SORT(2, 6);
+	PIX_SORT(3, 7); PIX_SORT(0, 2); PIX_SORT(1, 3);
+	PIX_SORT(4, 6); PIX_SORT(5, 7); PIX_SORT(2, 4);
+	PIX_SORT(3, 5); PIX_SORT(0, 1); PIX_SORT(2, 3);
+	PIX_SORT(4, 5); PIX_SORT(6, 7); PIX_SORT(1, 4);
+	PIX_SORT(3, 6);
+	return(p[3] + p[4]) * 0.5;
 }
 Item opt_med9(Item *p){
 	PIX_SORT(1, 2); PIX_SORT(4, 5); PIX_SORT(7, 8);
@@ -67,6 +96,23 @@ Item opt_med9(Item *p){
 	PIX_SORT(3, 6); PIX_SORT(1, 4); PIX_SORT(2, 5);
 	PIX_SORT(4, 7); PIX_SORT(4, 2); PIX_SORT(6, 4);
 	PIX_SORT(4, 2); return(p[4]);
+}
+Item opt_med16(Item *p){
+	PIX_SORT(0, 8); PIX_SORT(1, 9); PIX_SORT(2, 10); PIX_SORT(3, 11);
+	PIX_SORT(4, 12); PIX_SORT(5, 13); PIX_SORT(6, 14); PIX_SORT(7, 15);
+	PIX_SORT(0, 4); PIX_SORT(1, 5); PIX_SORT(2, 6); PIX_SORT(3, 7);
+	PIX_SORT(8, 12); PIX_SORT(9, 13); PIX_SORT(10, 14); PIX_SORT(11, 15);
+	PIX_SORT(4, 8); PIX_SORT(5, 9); PIX_SORT(6, 10); PIX_SORT(7, 11);
+	PIX_SORT(0, 2); PIX_SORT(1, 3); PIX_SORT(4, 6); PIX_SORT(5, 7);
+	PIX_SORT(8, 10); PIX_SORT(9, 11); PIX_SORT(12, 14); PIX_SORT(13, 15);
+	PIX_SORT(2, 8); PIX_SORT(3, 9); PIX_SORT(6, 12); PIX_SORT(7, 13);
+	PIX_SORT(2, 4); PIX_SORT(3, 5); PIX_SORT(6, 8); PIX_SORT(7, 9);
+	PIX_SORT(10, 12); PIX_SORT(11, 13); PIX_SORT(0, 1); PIX_SORT(2, 3);
+	PIX_SORT(4, 5); PIX_SORT(6, 7); PIX_SORT(8, 9); PIX_SORT(10, 11);
+	PIX_SORT(12, 13); PIX_SORT(14, 15); PIX_SORT(1, 8); PIX_SORT(3, 10);
+	PIX_SORT(5, 12); PIX_SORT(7, 14); PIX_SORT(5, 8); PIX_SORT(7, 10);
+	return (p[7] + p[8]) * 0.5;
+
 }
 Item opt_med25(Item *p){
 	PIX_SORT(0, 1)  ; PIX_SORT(3, 4)  ; PIX_SORT(2, 4) ;
@@ -154,8 +200,25 @@ Item quick_select(Item *idata, int n){
 #undef PIX_SORT
 #undef ELEM_SWAP
 
-
-
+/**
+ * calculate median of array idata with size n
+ */
+Item calc_median(Item *idata, int n){
+	assert(idata); assert(n>0);
+	typedef Item (*medfunc)(Item *p);
+	medfunc fn = NULL;
+	const medfunc fnarr[] = {opt_med2, opt_med3, opt_med4, opt_med5, opt_med6,
+			opt_med7, opt_med8, opt_med9};
+	if(n == 1) return *idata;
+	if(n < 10) fn = fnarr[n - 1];
+	else if(n == 16) fn = opt_med16;
+	else if(n == 25) fn = opt_med25;
+	if(fn){
+		return fn(idata);
+	}else{
+		return quick_select(idata, n);
+	}
+}
 
 
 

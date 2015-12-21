@@ -326,7 +326,6 @@ void showhelp(int oindex, myoption *options){
 	char buf[bufsz+1];
 	myoption *opts = options;
 	assert(opts);
-	DBG("hre");
 	assert(opts[0].name); // check whether there is at least one options
 	if(oindex > -1){ // print only one message
 		opts = &options[oindex];
@@ -384,6 +383,7 @@ void showhelp(int oindex, myoption *options){
 bool get_suboption(char *str, mysuboption *opt){
 	int findsubopt(char *par, mysuboption *so){
 		int idx = 0;
+		if(!par) return -1;
 		while(so[idx].name){
 			if(strcasecmp(par, so[idx].name) == 0) return idx;
 			++idx;
@@ -421,12 +421,12 @@ bool get_suboption(char *str, mysuboption *opt){
 		}
 		return result;
 	}
-	char *tok, *val;
+	char *tok;
 	bool ret = FALSE;
 	char *tmpbuf;
 	tok = strtok_r(str, ":,", &tmpbuf);
 	do{
-		val = strchr(tok, '=');
+		char *val = strchr(tok, '=');
 		int noarg = 0;
 		if(val == NULL){ // no args
 			val = "1";

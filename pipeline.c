@@ -88,20 +88,6 @@ ftypename filter_names[] = {
 	{FILTER_NONE, NULL, NULL, NULL, NULL}
 };
 
-typedef struct{
-	StepType type;
-	char *name;
-} stepscalespairs;
-
-stepscalespairs scales[] = {
-	{UNIFORM, "uniform"},
-	{LOG,     "log"},
-	{EXP,     "exp"},
-	{SQRT,    "sqrt"},
-	{POW,     "pow"},
-	{0, NULL}
-};
-
 void show_pipeline_pars(){
 	int i = 0;
 	/// "Параметры конвейера:\n"
@@ -264,10 +250,8 @@ IMAGE *process_pipeline(IMAGE *image){
 	size_t i;
 	Filter **far = farray;
 	IMAGE *in = copyFITS(image); // copy original image to leave it unchanged
-	char **keylist_ori = image->keylist;
-	size_t keylist_sz = image->keynum;
+	in->keylist = list_copy(image->keylist);
 	IMAGE *processed = NULL;
-	DBG("here");
 	for(i = 0; i < farray_size; ++i, ++far){
 		Filter *f = *far;
 		DBG("Got filter #%d: w=%d, h=%d, sx=%g, sy=%g\n", f->FilterType,
@@ -286,35 +270,12 @@ IMAGE *process_pipeline(IMAGE *image){
 			}
 			FREE(oarg.data);
 		}
+		processed->keylist = in->keylist;
 		// TODO: what's about writting changes into HISTORY?
+		in->keylist = NULL; // prevent deleting global keylist
 		imfree(&in);
 		in = processed;
 	}
-	DBG("here");
-	processed->keylist = MALLOC(char*, keylist_sz);
-	for(i = 0; i < keylist_sz; ++i)
-		processed->keylist[i] = strdup(keylist_ori[i]);
-	processed->keynum = keylist_sz;
 	return processed;
 }
 
-/*
-	IMAGE *newfit = get_median(fits, 2);
-	Filter f = {LAPGAUSS, 200, 200, atoi(argv[3]), atoi(argv[3])};
-	IMAGE *newf = DiffFilter(newfit, &f);
-	Filter f1 = {STEP, 3, LOG, 0, 0};
-	IMAGE *newfits = StepFilter(newf, &f1, NULL);
-
-	//IMAGE *newfit = get_median(fits, atoi(argv[3]));
-	//IMAGE *newfits = GradFilterSimple(newfit);
-
-	//Filter f = {STEP, atoi(argv[3]), POW, 0, 0};
-	//Item *levels;
-	//IMAGE *newfits = StepFilter(fits, &f, &levels);
-	//FREE(levels);
-	newfits->keylist = fits->keylist;
-	newfits->keynum = fits->keynum;
-	writeFITS(G.outfile, newfits);
-	imfree(&fits);
-	FREE(newfits->data); FREE(newfits);
-	*/

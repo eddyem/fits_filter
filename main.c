@@ -27,6 +27,7 @@
 #include "linfilter.h"
 #include "cmdlnopts.h"
 #include "pipeline.h"
+#include "group_operations.h"
 
 #ifndef BUFF_SIZ
 #define BUFF_SIZ 4096
@@ -42,23 +43,51 @@ int main(int argc, char **argv){
 	char buff[BUFF_SIZ];
 	//size_t i, s;
 	initial_setup();
-	parce_args(argc, argv);
-	if(!G.infile){
+	parse_args(argc, argv);
+	// pre-check pipeline parameters
+	if(G.conv){
+		pipe_needed = get_pipeline_params();
+	}
+	if(!G.infile && G.oper == MATH_NONE){
 		/// "Не задано имя входного файла"
 		ERRX(_("Missed input file name!"));
+	}else{
+		if(G.oper != MATH_NONE){
+			if(G.infile){
+				/// Параметр '-i' не используется при групповых операциях!
+				ERRX(_("Parameter '-i' isn't used in group operations!"));
+			}
+			if(inplace){
+				/// Не могу выполнить групповую операцию с сохранением 'в тот же файл'!
+				ERRX(_("Can't make group operations 'in place'!"));
+			}
+		}
+	}
+	if((G.infile) && !readFITS(G.infile, &fits)){
+		// "Невозможно прочесть входной файл!"
+		ERR(_("Can't read input file!"));
 	}
 	if(!G.outfile){ // user didn't write out file name - check for prefix
-		if(!G.rest_pars_num){
-			/// "Задайте имя выходного файла (-o) или его префикс (без ключа)"
-			ERRX(_("Set output file name (-o) or its prefix (without key)"));
-		}
-		if(!(G.outfile = make_filename(buff, BUFF_SIZ, G.rest_pars[0], "fits"))){
-			/// "Все 9999 файлов вида %sXXXX.fits заняты!"
-			ERRX(_("All 9999 files like %sXXXX.fits exists!"), G.rest_pars[0]);
+		if(inplace){ // G.outfile is the same as G.infile
+			G.outfile = G.infile;
+		}else{
+			if(!G.rest_pars_num){
+				/// "Задайте имя выходного файла (-o) или его префикс (без ключа)"
+				ERRX(_("Set output file name (-o) or its prefix (without key)"));
+			}
+			if(!(G.outfile = make_filename(buff, BUFF_SIZ, G.rest_pars[0], "fits"))){
+				/// "Все 9999 файлов вида %sXXXX.fits заняты!"
+				ERRX(_("All 9999 files like %sXXXX.fits exists!"), G.rest_pars[0]);
+			}
+			// move starting to next free parameter
+			if(--G.rest_pars_num)
+				G.rest_pars = &G.rest_pars[1];
+			else
+				G.rest_pars = NULL;
 		}
 	}else{ // check whether file don't exists or there's a key '--rewrite'
 		if(!file_absent(G.outfile)){
-			if(rewrite_ifexists){
+			if(rewrite_ifexists || inplace){
 				/// "Не могу удалить файл %s"
 				if(unlink(G.outfile)) ERR(_("Can't remove file %s"), G.outfile);
 			}else{
@@ -67,28 +96,41 @@ int main(int argc, char **argv){
 			}
 		}
 	}
-	// pre-check pipeline parameters
-	if(G.conv){
-		pipe_needed = get_pipeline_params();
+	// Process pipeline only if there's
+	if(G.infile){
+		if(show_stat){
+			Item min, max, mean, std, med;
+			get_statictics(fits, &min, &max, &mean, &std, &med);
+			// "Статистика по входному изображению:\n"
+			green(_("Input image statistics:\n"));
+			printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
+					min, max, mean, std, med);
+		}
+	}else{ // G.oper != MATH_NONE or some other (in future?)
+		if(G.oper != MATH_NONE){ // process all files to make group operation
+			if(G.rest_pars_num < 2){
+				/// "Групповые операции требуют задания как минимум двух FITS-файлов
+				ERRX(_("Group operations need at least two FITS-files"));
+			}
+			// now create variable "fits" with result of grouping operation
+			fits = make_group_operation(G.rest_pars_num, G.rest_pars, G.oper);
+			if(!fits){
+				/// Ошибка при групповой обработке
+				ERRX(_("Error in group operation"));
+			}
+			if(show_stat){
+				Item min, max, mean, std, med;
+				get_statictics(fits, &min, &max, &mean, &std, &med);
+				// "Статистика по изображению после групповых операций:\n"
+				green(_("Image statistics after group operations:\n"));
+				printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
+						min, max, mean, std, med);
+			}
+		}
 	}
-	if(!readFITS(G.infile, &fits)){
-		// "Невозможно прочесть входной файл!"
-		ERR(_("Can't read input file!"));
-	}
-	DBG("ima: %dx%d", fits->width, fits->height);
-
-	if(show_stat){
-		Item min, max, mean, std, med;
-		get_statictics(fits, &min, &max, &mean, &std, &med);
-		// "Статистика по входному изображению:\n"
-		green(_("Input image statistics:\n"));
-		printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
-				min, max, mean, std, med);
-	}
-
+	// process pipeline both in case of single input file ('-i')
 	if(pipe_needed)
 		newfit = process_pipeline(fits);
-
 	if(show_stat && newfit){
 		Item min, max, mean, std, med;
 		get_statictics(newfit, &min, &max, &mean, &std, &med);
@@ -96,6 +138,32 @@ int main(int argc, char **argv){
 		green(_("Image statistics after pipeline:\n"));
 		printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
 				min, max, mean, std, med);
+	}
+	if(!newfit) newfit = fits;
+	/**************************************************************************************************************
+	 *
+	 * place here any other operations with [processed through pipeline] input file or result of group operations
+	 *    (newfit)
+	 *
+	 **************************************************************************************************************/
+	// change keys in output file FITS-header
+	if(keys2delete){
+		DBG("delete keys");
+		do{
+			list_remove_key(&newfit->keylist, *keys2delete);
+		}while(*(++keys2delete));
+	}
+	if(recs2delete){
+		DBG("delete records");
+		do{
+			list_remove_records(&newfit->keylist, *recs2delete);
+		}while(*(++recs2delete));
+	}
+	if(recs2add){
+		DBG("add records");
+		do{
+			list_add_record(&newfit->keylist, *recs2add);
+		}while(*(++recs2add));
 	}
 	writeFITS(G.outfile, newfit);
 /*
@@ -113,7 +181,6 @@ int main(int argc, char **argv){
 	//IMAGE *newfits = StepFilter(fits, &f, &levels);
 	//FREE(levels);
 	newfits->keylist = fits->keylist;
-	newfits->keynum = fits->keynum;
 	writeFITS(G.outfile, newfits);
 	imfree(&fits);
 	FREE(newfits->data); FREE(newfits);

@@ -36,23 +36,38 @@ cfitsio.h BITPIX code values for FITS image types:
 #define DOUBLE_IMG  -64
 */
 
+typedef struct klist_{
+	char *record;
+	struct klist_ *next;
+} KeyList;
+
 typedef struct{
 	int width;			// width
 	int height;			// height
 	int dtype;			// data type
 	double *data;		// picture data
-	char **keylist;		// list of options for each key
-	size_t keynum;		// full number of keys (size of *keylist)
+	KeyList *keylist;	// list of options for each key
 } IMAGE;
 
+void list_free(KeyList **list);
+KeyList *list_add_record(KeyList **list, char *rec);
+KeyList *list_find_key(KeyList *list, char *key);
+void list_remove_key(KeyList **list, char *key);
+KeyList *list_modify_key(KeyList *list, char *key, char *newval);
+void list_remove_records(KeyList **list, char *sample);
+KeyList *list_copy(KeyList *list);
+KeyList *list_get_end(KeyList *list);
+
 void imfree(IMAGE **ima);
-bool readFITS(char *filename, IMAGE **fits);
+IMAGE *readFITS(char *filename, IMAGE **fits);
 bool writeFITS(char *filename, IMAGE *fits);
+IMAGE *newFITS(size_t h, size_t w, int dtype);
 IMAGE *similarFITS(IMAGE *in, int dtype);
 IMAGE *copyFITS(IMAGE *in);
 
 extern struct stat filestat;
 char* make_filename(char *buff, size_t buflen, char *prefix, char *suffix);
 bool file_absent(char *name);
+
 
 #endif // __FITS_H__

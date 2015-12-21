@@ -77,6 +77,14 @@ typedef struct _Filter{
 	IMAGE* (*imfunc)(IMAGE *in, struct _Filter *f, Itmarray *i);	// image function for given conversion type
 } Filter;
 
+// mathematical operations when there's no '-i' parameter (for >1 FITS-files)
+typedef enum{
+	MATH_NONE = 0
+	,MATH_SUM           // make sum of all files
+	,MATH_MEDIAN        // calculate median by all files
+	,MATH_MEAN          // calculate mean for all files
+} MathOper;
+
 // pointer to image conversion function
 typedef IMAGE* (*imfuncptr)(IMAGE *in, Filter *f, Itmarray *i);
 

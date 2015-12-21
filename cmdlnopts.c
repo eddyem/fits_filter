@@ -36,9 +36,17 @@
 int help;
 glob_pars G;
 
-int rewrite_ifexists = 0, // rewrite existing files == 0 or 1
-	verbose_level = 0,    // each -v increments this value, e.g. -vvv sets it to 3
-	show_stat = 0;        // show statistic parameters of input and output image
+int rewrite_ifexists = 0  // rewrite existing files == 0 or 1
+	,verbose_level = 0    // each -v increments this value, e.g. -vvv sets it to 3
+	,show_stat = 0        // show statistic parameters of input and output image
+	,inplace = 0          // save results into same file
+;
+
+char **keys2delete = NULL  // keylist for deletion
+	,**recs2delete = NULL  // records to delete by substring
+	,**recs2add    = NULL  // records to add
+;
+
 //            DEFAULTS
 // default global parameters
 glob_pars const Gdefault = {
@@ -47,6 +55,7 @@ glob_pars const Gdefault = {
 	,0			// rest_pars_num
 	,NULL		// rest_pars
 	,NULL		// conv
+	,MATH_NONE	// oper
 };
 
 /*
@@ -72,6 +81,8 @@ myoption cmdlnopts[] = {
 	{"help",	NO_ARGS,	NULL,	'h',	arg_int,	APTR(&help),		N_("show this help")},
 	/// "входной файл"
 	{"infile",	NEED_ARG,	NULL,	'i',	arg_string,	APTR(&G.infile),	N_("input file")},
+	/// "записать изменения в тот же файл"
+	{"inplace",	NO_ARGS,	&inplace,1,		arg_none,	NULL,				N_("save results into same file")},
 	/// "выходной файл"
 	{"outfile",	NEED_ARG,	NULL,	'o',	arg_string,	APTR(&G.outfile),	N_("output file")},
 	/// "установить параметры конвейера, arg: type=type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - справка по параметрам типа"
@@ -82,6 +93,18 @@ myoption cmdlnopts[] = {
 	{"verbose",	NO_ARGS,	NULL,	'v',	arg_none,	APTR(&verbose_level),N_("verbose level (each -v increase it)")},
 	/// "отобразить статистические параметры входного и выходного изображения"
 	{"stat",	NO_ARGS,	NULL,	's',	arg_int,	APTR(&show_stat),	N_("show statistic parameters of input and output image")},
+	/// "удалить указанный ключ"
+	{"del-key",	MULT_PAR,	NULL,	'd',	arg_string,	APTR(&keys2delete),	N_("delete given key")},
+	/// удалить все записи с указанной подстрокой
+	{"del-rec",	MULT_PAR,	NULL,	'D',	arg_string,	APTR(&recs2delete),	N_("delete all records with given substring")},
+	/// добавить запись в FITS-шапку
+	{"add-rec",	MULT_PAR,	NULL,	'a',	arg_string,	APTR(&recs2add),	N_("add record to FITS-header")},
+	/// вычислить сумму всех перечисленных изображений
+	{"sum",		NO_ARGS,	&G.oper,MATH_SUM,arg_none,	NULL,				N_("calculate sum of specified FITS-files")},
+	/// вычислить среднее арифметическое всех перечисленных изображений
+	{"mean",	NO_ARGS,	&G.oper,MATH_MEAN,arg_none,	NULL,				N_("calculate mean of specified FITS-files")},
+	/// вычислить медиану всех перечисленных изображений
+	{"median",	NO_ARGS,	&G.oper,MATH_MEDIAN,arg_none,NULL,				N_("calculate median of specified FITS-files")},
 	end_option
 };
 
@@ -231,7 +254,7 @@ glob_pars *parse_args(int argc, char **argv){
 	void *ptr;
 	ptr = memcpy(&G, &Gdefault, sizeof(G)); assert(ptr);
 	/// "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
-	change_helpstring(_("Usage: %s [args] [outfile prefix]\n\n\tWhere args are:\n"));
+	change_helpstring(_("Usage: %s [args] [outfile prefix] [file list for group operations]\n\n\tWhere args are:\n"));
 	// parse arguments
 	parseargs(&argc, &argv, cmdlnopts);
 	if(help) showhelp(-1, cmdlnopts);

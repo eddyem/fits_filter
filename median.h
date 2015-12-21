@@ -28,5 +28,6 @@
 IMAGE *get_median(IMAGE *img, Filter *f, Itmarray *i);
 IMAGE *get_adaptive_median(IMAGE *img, Filter *f, Itmarray *i);
 Item quick_select(Item *idata, int n);
+Item calc_median(Item *idata, int n);
 
 #endif // __MEDIAN_H__

@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: PACKAGE VERSION\n"
         "Report-Msgid-Bugs-To: \n"
-        "POT-Creation-Date: 2015-12-09 17:50+0300\n"
+        "POT-Creation-Date: 2015-12-21 20:30+0300\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,25 +17,50 @@ msgstr  "Project-Id-Version: PACKAGE VERSION\n"
         "Content-Transfer-Encoding: 8bit\n"
 
 #. / "%s: необходим аргумент!"
-#: /home/eddy/tmp/fits_adp_median/parceargs.c:420
+#: /home/eddy/tmp/fits_adp_median/parseargs.c:448
 #, c-format
 msgid   "%s: argument needed!"
 msgstr  "%s: необходим аргумент!"
 
 #. / "Все 9999 файлов вида %sXXXX.fits заняты!"
-#: /home/eddy/tmp/fits_adp_median/main.c:55
+#: /home/eddy/tmp/fits_adp_median/main.c:80
 #, c-format
 msgid   "All 9999 files like %sXXXX.fits exists!"
+msgstr  "Все 9999 файлов вида %sXXXX.fits заняты!"
+
+#. / "Количество уровней градаций яркости должно быть от 2 до 255"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:188
+msgid   "Brightness levels amount shoul be from 2 to 255"
+msgstr  "Количество уровней градаций яркости должно быть от 2 до 255"
+
+#. / "Не могу добавить запись в список"
+#: /home/eddy/tmp/fits_adp_median/fits.c:242
+msgid   "Can't add record to list"
+msgstr  "Не могу добавить запись в список"
+
+#. / Не могу вычислить медиану меньше чем для двух изображений
+#: /home/eddy/tmp/fits_adp_median/group_operations.c:102
+msgid   "Can't calculate median for less than two images"
 msgstr  ""
 
 #: /home/eddy/tmp/fits_adp_median/usefull_macros.c:181
 msgid   "Can't close mmap'ed file"
 msgstr  "Не могу закрыть ммапнутый файл"
 
+#. / "Не могу скопировать данные"
+#: /home/eddy/tmp/fits_adp_median/fits.c:74
+msgid   "Can't copy data"
+msgstr  "Не могу скопировать данные"
+
 #. Get settings
 #: /home/eddy/tmp/fits_adp_median/usefull_macros.c:283
 msgid   "Can't get settings"
 msgstr  "Невозможно получить настройки"
+
+#. / Не могу выполнить групповую операцию с сохранением 'в тот же файл'!
+#: /home/eddy/tmp/fits_adp_median/main.c:62
+msgid   "Can't make group operations 'in place'!"
+msgstr  "Не могу выполнить групповую операцию с сохранением 'в тот же файл'!"
 
 #: /home/eddy/tmp/fits_adp_median/usefull_macros.c:190
 msgid   "Can't munmap"
@@ -46,22 +71,24 @@ msgstr  "Не могу сделать munmap"
 msgid   "Can't open %s for reading"
 msgstr  "Не могу прочитать %s"
 
-#: /home/eddy/tmp/fits_adp_median/fits.c:77
+#: /home/eddy/tmp/fits_adp_median/fits.c:214
 msgid   "Can't read HDU"
 msgstr  "Не могу прочесть HDU"
 
-#. "Невозможно прочесть входной файл!"
-#: /home/eddy/tmp/fits_adp_median/main.c:71
-msgid   "Can't read input file!"
-msgstr  "Входной файл нечитаем"
+#. / Не могу прочесть файл %s из последовательности
+#: /home/eddy/tmp/fits_adp_median/group_operations.c:158
+#, c-format
+msgid   "Can't read file %s from sequence"
+msgstr  "Не могу прочесть файл %s из последовательности"
 
-#: /home/eddy/tmp/fits_adp_median/fits.c:97
-msgid   "Can't realloc"
-msgstr  "Не могу сделать reallok"
+#. "Невозможно прочесть входной файл!"
+#: /home/eddy/tmp/fits_adp_median/main.c:68
+msgid   "Can't read input file!"
+msgstr  "Невозможно прочесть входной файл!"
 
 #. / "Не могу удалить файл %s"
-#: /home/eddy/tmp/fits_adp_median/main.c:61
-#, fuzzy, c-format
+#: /home/eddy/tmp/fits_adp_median/main.c:92
+#, c-format
 msgid   "Can't remove file %s"
 msgstr  "Не могу закрыть ммапнутый файл"
 
@@ -78,94 +105,338 @@ msgstr  "Не могу нсатроить консоль,"
 msgid   "Can't stat %s"
 msgstr  "Не могу прочесть параметры %s"
 
+#. / "Преобразование %s: %s\n"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:104
+#, c-format
+msgid   "Conversion %s <%s> parameters:\n"
+msgstr  "Преобразование %s: %s\n"
+
+#. / "Угол должен быть меньше 360 градусов"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:163
+msgid   "Degrees should be less than 360"
+msgstr  "Угол должен быть меньше 360 градусов"
+
+#. / Ошибка при групповой обработке
+#: /home/eddy/tmp/fits_adp_median/main.c:119
+msgid   "Error in group operation"
+msgstr  "Ошибка при групповой обработке"
+
+#. / "Ошибка в обработке конвейера"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:263
+msgid   "Error on pipeline processing!"
+msgstr  "Неправильный параметр: %s"
+
 #: /home/eddy/tmp/fits_adp_median/convfilter.c:240
 msgid   "FFTW error"
 msgstr  "Ошибка FFTW"
 
-#: /home/eddy/tmp/fits_adp_median/fits.c:122
+#. / "Полуширина фильтра должна быть не меньше 1."
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:181
+msgid   "Filter FWHM should be not less than 1."
+msgstr  "Полуширина фильтра должна быть не меньше 1."
+
+#. "Высота фильтра изменена на 5"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:176
+msgid   "Filter window height changed to 5"
+msgstr  "Высота фильтра изменена на 5"
+
+#. "Ширина фильтра изменена на 5"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:171
+msgid   "Filter window width changed to 5"
+msgstr  "Ширина фильтра изменена на 5"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:263
 #, c-format
 msgid   "Found %d pixels with undefined value"
 msgstr  "Обнаружено %d пикселей с неопределенным значением"
 
-#: /home/eddy/tmp/fits_adp_median/fits.c:84
+#. / "Групповые операции требуют задания как минимум двух FITS-файлов
+#: /home/eddy/tmp/fits_adp_median/main.c:113
+msgid   "Group operations need at least two FITS-files"
+msgstr  "Групповые операции требуют задания как минимум двух FITS-файлов"
+
+#. "Статистика по изображению после групповых операций:\n"
+#: /home/eddy/tmp/fits_adp_median/main.c:125
+#, fuzzy
+msgid   "Image statistics after group operations:\n"
+msgstr  "Статистика по изображению после конвейера:\n"
+
+#. "Статистика по изображению после конвейера:\n"
+#: /home/eddy/tmp/fits_adp_median/main.c:138
+msgid   "Image statistics after pipeline:\n"
+msgstr  "Статистика по изображению после конвейера:\n"
+
+#: /home/eddy/tmp/fits_adp_median/fits.c:221
 msgid   "Images with > 2 dimensions are not supported"
 msgstr  "Многомерные изображения не поддерживаются"
 
+#. "Статистика по входному изображению:\n"
+#: /home/eddy/tmp/fits_adp_median/main.c:105
+msgid   "Input image statistics:\n"
+msgstr  "Статистика по входному изображению:\n"
+
 #. / "Целое вне допустимого диапазона"
-#: /home/eddy/tmp/fits_adp_median/parceargs.c:86
+#: /home/eddy/tmp/fits_adp_median/parseargs.c:86
 msgid   "Integer out of range"
 msgstr  "Целое вне допустимого диапазона"
 
 #. / "Не задано имя входного файла"
-#: /home/eddy/tmp/fits_adp_median/main.c:46
+#: /home/eddy/tmp/fits_adp_median/main.c:53
 msgid   "Missed input file name!"
 msgstr  "Не задано имя входного файла"
 
 #: /home/eddy/tmp/fits_adp_median/usefull_macros.c:180
 msgid   "Mmap error for input"
-msgstr  ""
+msgstr  "Ошибка mmap"
 
 #: /home/eddy/tmp/fits_adp_median/usefull_macros.c:173
 msgid   "No filename given!"
 msgstr  "Не задано имя файла"
 
+#. / "Не задано входное изображение"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:244
+msgid   "No input image given"
+msgstr  "Не задано имя файла"
+
+#. / "Не заданы параметры конвейера"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:248
+msgid   "No pipeline parameters given"
+msgstr  "Неправильный параметр: %s"
+
+#. / Параметр '-i' не используется при групповых операциях!
+#: /home/eddy/tmp/fits_adp_median/main.c:58
+msgid   "Parameter '-i' isn't used in group operations!"
+msgstr  "Параметр '-i' не используется при групповых операциях!"
+
+#. / "Параметры конвейера:\n"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:94
+msgid   "Pipeline parameters:\n"
+msgstr  "Параметры конвейера:\n"
+
+#. / "Параметры фильтра постеризации должны быть такими:\n%s"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:205
+#, c-format
+msgid   "Posterisation filter parameters should be:\n"
+        "%s"
+msgstr  "Параметры фильтра постеризации должны быть такими:\n"
+        "%s"
+
+#. / "горизонтальный фильтр Прюитта (простейшая производная)"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:79
+msgid   "Prewitt horizontal - simple derivative"
+msgstr  "горизонтальный фильтр Прюитта (простейшая производная)"
+
+#. / "вертикальный фильтр Прюитта"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:81
+msgid   "Prewitt vertical"
+msgstr  "вертикальный фильтр Прюитта"
+
+#. / "горизонтальный фильтр Щарра (модифицированный Собель)"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:83
+msgid   "Scharr (modified Sobel) horizontal"
+msgstr  "горизонтальный фильтр Щарра (модифицированный Собель)"
+
+#. / "вертикальный фильтр Щарра"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:85
+msgid   "Scharr vertical"
+msgstr  "вертикальный фильтр Щарра"
+
 #. / "Задайте имя выходного файла (-o) или его префикс (без ключа)"
-#: /home/eddy/tmp/fits_adp_median/main.c:51
+#: /home/eddy/tmp/fits_adp_median/main.c:76
 msgid   "Set output file name (-o) or its prefix (without key)"
-msgstr  ""
+msgstr  "Задайте имя выходного файла (-o) или его префикс (без ключа)"
+
+#. / Количество доступных файлов меньше двух
+#: /home/eddy/tmp/fits_adp_median/group_operations.c:167
+msgid   "The amount of available files less than two"
+msgstr  "оличество доступных файлов меньше двух"
 
 #. / "Выходной файл существует"
-#: /home/eddy/tmp/fits_adp_median/main.c:64
-#, fuzzy
+#: /home/eddy/tmp/fits_adp_median/main.c:95
 msgid   "The output file exists"
-msgstr  "входной файл"
+msgstr  "Выходной файл существует"
 
-#. "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:226
-#, fuzzy, c-format
-msgid   "Usage: %s [args] [outfile prefix]\n"
+#. / Неизвестная групповая операция
+#: /home/eddy/tmp/fits_adp_median/group_operations.c:149
+msgid   "Unknown group operation"
+msgstr  "Неизвестная групповая операция"
+
+#. / "Использование: %s [аргументы] [префикс выходного файла]\n\n\tГде [аргументы]:\n"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:257
+#, c-format
+msgid   "Usage: %s [args] [outfile prefix] [file list for group operations]\n"
         "\n"
         "\tWhere args are:\n"
-msgstr  "Использование: %s [аргументы]\n"
+msgstr  "Использование: %s [аргументы] [префикс выходного файла]\n"
         "\n"
         "\tГде аргументы:\n"
 
 #. / "Неправильный аргумент \"%s\" параметра \"%s\""
-#: /home/eddy/tmp/fits_adp_median/parceargs.c:425
+#: /home/eddy/tmp/fits_adp_median/parseargs.c:453
 #, c-format
 msgid   "Wrong argument \"%s\" of parameter \"%s\""
 msgstr  "Неправильный аргумент \"%s\" параметра \"%s\""
 
+#. / "Неправильный формат числа double!"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:134
+msgid   "Wrong double number format!"
+msgstr  "Неправильный формат числа double!"
+
 #. amount of pcount and/or scount wrong
 #. / "Неправильный формат строки помощи"
-#: /home/eddy/tmp/fits_adp_median/parceargs.c:56
+#: /home/eddy/tmp/fits_adp_median/parseargs.c:56
 msgid   "Wrong helpstring!"
 msgstr  "Неправильный формат строки помощи"
 
+#. "Неправильное количество уровней: %d"
+#: /home/eddy/tmp/fits_adp_median/linfilter.c:151
+#, c-format
+msgid   "Wrong levels amount: %d"
+msgstr  "Неправильное количество уровней: %d"
+
 #. / "Неправильный параметр: %s"
-#: /home/eddy/tmp/fits_adp_median/parceargs.c:415
+#: /home/eddy/tmp/fits_adp_median/parseargs.c:443
 #, c-format
 msgid   "Wrong parameter: %s"
 msgstr  "Неправильный параметр: %s"
 
+#. wrong type
+#. / "Неправильный параметр 'type' конвейера"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:153
+#, c-format
+msgid   "Wrong pipeline 'type' parameter: %s"
+msgstr  "Неправильный параметр: %s"
+
+#. / "Неправильно заданы параметры конвейера"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:234
+msgid   "Wrong pipeline parameters!"
+msgstr  "Неправильно заданы параметры конвейера"
+
+#. no type given
+#. / "Необходимо по крайней мере задать параметр 'type', например: '-c type=help'"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:137
+msgid   "You should at least give parameter 'type', for example: '-c "
+        "type=help'"
+msgstr  "Необходимо по крайней мере задать параметр 'type', например: '-c "
+        "type=help'"
+
+#. / "Не указан параметр scale"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:195
+msgid   "You should set 'scale' parameter"
+msgstr  "Не указан параметр scale"
+
+#. / добавить запись в FITS-шапку
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:101
+msgid   "add record to FITS-header"
+msgstr  "добавить запись в FITS-шапку"
+
+#. / "аргументы отсутствуют"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:57
+msgid   "arguments are absent"
+msgstr  "аргументы отсутствуют"
+
+#. / вычислить среднее арифметическое всех перечисленных изображений
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:105
+msgid   "calculate mean of specified FITS-files"
+msgstr  "вычислить среднее арифметическое всех перечисленных изображений"
+
+#. / вычислить медиану всех перечисленных изображений
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:107
+msgid   "calculate median of specified FITS-files"
+msgstr  "вычислить медиану всех перечисленных изображений"
+
+#. / вычислить сумму всех перечисленных изображений
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:103
+msgid   "calculate sum of specified FITS-files"
+msgstr  "вычислить сумму всех перечисленных изображений"
+
+#. / удалить все записи с указанной подстрокой
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:99
+msgid   "delete all records with given substring"
+msgstr  "удалить все записи с указанной подстрокой"
+
+#. / "удалить указанный ключ"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:97
+msgid   "delete given key"
+msgstr  "удалить указанный ключ"
+
+#. / "гауссов фильтр"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:71
+msgid   "gaussian"
+msgstr  "гауссов фильтр"
+
+#. / "горизонтальный фильтр Собеля"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:73
+msgid   "horizontal Sobel"
+msgstr  "горизонтальный фильтр Собеля"
+
 #. / "входной файл"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:72
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:83
 msgid   "input file"
 msgstr  "входной файл"
 
+#. / "лапласиан гауссианы"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:69
+msgid   "laplasian of gaussian"
+msgstr  "лапласиан гауссианы"
+
+#. / "медианный фильтр"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:65
+msgid   "median filter"
+msgstr  "медианный фильтр"
+
+#. / "nsteps\tколичество градаций яркости\nscale\tфункция преобразования (uniform, log, exp, sqrt, pow)"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:61
+msgid   "nsteps\tamount of steps\n"
+        "scale\tscale type (uniform, log, exp, sqrt, pow)"
+msgstr  "nsteps\tколичество градаций яркости\n"
+        "scale\tфункция преобразования (uniform, log, exp, sqrt, pow)"
+
 #. / "выходной файл"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:74
-#, fuzzy
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:87
 msgid   "output file"
-msgstr  "входной файл"
+msgstr  "выходной файл"
+
+#. / "\"постеризация\""
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:87
+msgid   "posterisation"
+msgstr  "\"постеризация\""
+
+#. / "r\tрадиус фильтра (беззнаковое целое или 0 для \"креста\" 3x3)"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:59
+msgid   "r\tradius of filter (uint, 0 for cross 3x3)"
+msgstr  "r\tрадиус фильтра (беззнаковое целое или 0 для \"креста\" 3x3)"
 
 #. / "перезаписать выходной файл, если он существует (только с опцией -i)"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:76
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:91
 msgid   "rewrite output file if exists (works only with option -i)"
-msgstr  ""
+msgstr  "перезаписать выходной файл, если он существует (только с опцией -i)"
+
+#. / "записать изменения в тот же файл"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:85
+msgid   "save results into same file"
+msgstr  "записать изменения в тот же файл"
+
+#.
+#. // here are functions & definitions for complex parameters (with suboptions etc)
+#. bool get_mir_par(void *arg);
+#. const char MirPar[] = "set mirror parameters, arg=[diam=num:foc=num:Zincl=ang:Aincl=ang]\n" 		"\t\t\tALL DEGREES ARE IN FORMAT [+-][DDd][MMm][SS.S] like -10m13.4 !\n" 		"\t\tdiam  - diameter of mirror\n" 		"\t\tfoc   - mirror focus ratio\n" 		"\t\tZincl - inclination from Z axe\n" 		"\t\tAincl - azimuth of inclination";
+#. / "установить параметры конвейера, аргументы: type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - список доступных для данного 'type' опций"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:71
+msgid   "set pipeline parameters, arg: type=type:[help]:...\n"
+        "\t\ttype - transformation type (help for list)\n"
+        "\t\thelp - list of available parameters for given 'type'"
+msgstr  "установить параметры конвейера, аргументы: type:[help]:...\n"
+        "\t\ttype - тип преобразования (help для справки)\n"
+        "\t\thelp - список доступных для данного 'type' опций"
+
+#. / "отобразить статистические параметры входного и выходного изображения"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:95
+msgid   "show statistic parameters of input and output image"
+msgstr  "отобразить статистические параметры входного и выходного изображения"
 
 #. / "отобразить эту справку"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:70
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:81
 msgid   "show this help"
 msgstr  "отобразить эту справку"
 
@@ -177,10 +448,32 @@ msgstr  "sigma_x слишком мала, устанавливаю в 1."
 msgid   "sigma_y is too low, set to 1."
 msgstr  "sigma_x слишком мала, устанавливаю в 1."
 
-#. / "уровень подробностей вывода (каждый -v увеличивает его)"
-#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:78
-msgid   "verbose level (each -v increase it)"
-msgstr  ""
+#. / "простой адаптивный медианный фильтр"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:67
+msgid   "simple adaptive median filter"
+msgstr  "простой адаптивный медианный фильтр"
 
-#~ msgid        "Usage: %s infile outfile num"
-#~ msgstr       "Использование: %s <входной файл> <выходной файл> <число>"
+#. / "простой градиент (операторами Собеля)"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:77
+msgid   "simple gradient (by Sobel)"
+msgstr  "простой градиент (операторами Собеля)"
+
+#. / "sx,sy\tпараметр сигма по осям x и y\nw,h\tширина и высота ненулевого окна фильтра"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:55
+msgid   "sx,sy\tsigma by axes x & y\n"
+        "w,h\tnon-zero window width & height"
+msgstr  "sx,sy\tпараметр сигма по осям x и y\n"
+        "w,h\tширина и высота ненулевого окна фильтра"
+
+#. / "уровень подробностей вывода (каждый -v увеличивает его)"
+#: /home/eddy/tmp/fits_adp_median/cmdlnopts.c:93
+msgid   "verbose level (each -v increase it)"
+msgstr  "уровень подробностей вывода (каждый -v увеличивает его)"
+
+#. / "вертикальный фильтр Собеля"
+#: /home/eddy/tmp/fits_adp_median/pipeline.c:75
+msgid   "vertical Sobel"
+msgstr  "вертикальный фильтр Собеля"
+
+#~ msgid        "Can't realloc"
+#~ msgstr       "Не могу сделать reallok"

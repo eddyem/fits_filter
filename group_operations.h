@@ -1,5 +1,5 @@
 /*
- * linfilter.h
+ * group_operations.h
  *
  * Copyright 2015 Edward V. Emelianov <eddy@sao.ru, edward.emelianoff@gmail.com>
  *
@@ -19,31 +19,11 @@
  * MA 02110-1301, USA.
  */
 #pragma once
-#ifndef __LINFILTER_H__
-#define __LINFILTER_H__
+#ifndef __GROUP_OPERATIONS_H__
+#define __GROUP_OPERATIONS_H__
 
 #include "types.h"
-#include "fits.h"
-#include "convfilter.h"
 
-// f->h for STEP filter
-typedef enum{
-	 UNIFORM
-	,LOG
-	,EXP
-	,SQRT
-	,POW
-} StepType;
+IMAGE *make_group_operation(int names_amount, char **names, MathOper oper);
 
-typedef struct{
-	StepType type;
-	char *name;
-} stepscalespairs;
-
-extern stepscalespairs scales[];
-
-void get_statictics(IMAGE *img, Item *min, Item *max,
-					Item *mean, Item *std, Item *med);
-IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale);
-
-#endif // __LINFILTER_H__
+#endif // __GROUP_OPERATIONS_H__

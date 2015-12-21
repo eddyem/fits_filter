@@ -52,16 +52,152 @@ do{ fitsstatus = 0;								\
 	if(status) fits_report_error(stderr, status);\
 }while(0)
 
+KeyList *list_get_end(KeyList *list){
+	if(!list) return NULL;
+	while(list->next) list = list->next;
+	return list;
+}
+
+/**
+ * add record to keylist
+ * @param list (io) - pointer to root of list or NULL
+ * 						if *root == NULL, just created node will be placed there
+ * @param rec       - data inserted
+ * @return pointer to created node
+ */
+KeyList *list_add_record(KeyList **list, char *rec){
+	KeyList *node, *last;
+	if((node = (KeyList*) MALLOC(KeyList, 1)) == 0)  return NULL; // allocation error
+	node->record = strdup(rec); // insert data
+	if(!node->record){
+		/// "Не могу скопировать данные"
+		WARNX(_("Can't copy data"));
+		return NULL;
+	}
+	if(list){
+		if(*list){ // there was root node - search last
+			last = list_get_end(*list);
+			last->next = node; // insert pointer to new node into last element in list
+		}
+		else *list = node;
+	}
+	return node;
+}
+
+/**
+ * return record with given key or NULL
+ */
+KeyList *list_find_key(KeyList *list, char *key){
+	if(!list || !key) return NULL;
+	size_t L = strlen(key);
+	do{
+		if(list->record){
+			if(strncmp(list->record, key, L) == 0){ // key found
+				return list;
+			}
+		}
+		list = list->next;
+	}while(list);
+	return NULL;
+}
+
+/**
+ * modify key value
+ * return NULL if given key is absent
+ */
+KeyList *list_modify_key(KeyList *list, char *key, char *newval){
+	char buf[80];
+	KeyList *rec = list_find_key(list, key);
+	if(!rec) return NULL;
+	char *comm = strchr(rec->record, '/');
+	if(!comm) comm = "";
+	FREE(rec->record);
+	snprintf(buf, 80, "%-8s=%21s %s", key, newval, comm);
+	rec->record = strdup(buf);
+	DBG("modify: %s", buf);
+	return rec;
+}
+
+/**
+ * remove record by key
+ */
+void list_remove_key(KeyList **keylist, char *key){
+	if(!keylist || !key) return;
+	size_t L = strlen(key);
+	KeyList *prev = NULL, *list = *keylist;
+	do{
+		if(list->record){
+			if(strncmp(list->record, key, L) == 0){ // key found
+				if(prev) prev->next = list->next;
+				else *keylist = list->next; // first record
+				FREE(list->record);
+				FREE(list);
+				return;
+			}
+		}
+		prev = list;
+		list = list->next;
+	}while(list);
+}
+/**
+ * remove records by any sample
+ */
+void list_remove_records(KeyList **keylist, char *sample){
+	if(!keylist || !sample) return;
+	KeyList *prev = NULL, *list = *keylist;
+	DBG("remove %s", sample);
+	do{
+		if(list->record){
+			if(strstr(list->record, sample)){ // key found
+				if(prev) prev->next = list->next;
+				else *keylist = list->next; // first record
+				KeyList *tmp = list->next;
+				FREE(list->record);
+				FREE(list);
+				list = tmp;
+				continue;
+			}
+		}
+		prev = list;
+		list = list->next;
+	}while(list);
+}
+/**
+ * free list memory & set it to NULL
+ */
+void list_free(KeyList **list){
+	KeyList *node = *list, *next;
+	if(!list || !*list) return;
+	do{
+		next = node->next;
+		FREE(node->record);
+		free(node);
+		node = next;
+	}while(node);
+	*list = NULL;
+}
+/**
+ * make a full copy of given list
+ */
+KeyList *list_copy(KeyList *list){
+	if(!list) return NULL;
+	KeyList *newlist = NULL, *node = NULL, *nxt;
+	do{
+		nxt = list_add_record(&node, list->record);
+		if(!newlist) newlist = node;
+		node = nxt;
+		list = list->next;
+	}while(list);
+	return newlist;
+}
+
 void imfree(IMAGE **img){
-	size_t i, sz = (*img)->keynum;
-	char **list = (*img)->keylist;
-	for(i = 0; i < sz; ++i) FREE(list[i]);
-	FREE((*img)->keylist);
+	list_free(&(*img)->keylist);
 	FREE((*img)->data);
 	FREE(*img);
 }
 
-bool readFITS(char *filename, IMAGE **fits){
+IMAGE* readFITS(char *filename, IMAGE **fits){
 	FNAME();
 	bool ret = TRUE;
 	fitsfile *fp;
@@ -90,24 +226,28 @@ bool readFITS(char *filename, IMAGE **fits){
 	img->height = naxes[1];
 	DBG("got image %ldx%ld pix, bitpix=%d", naxes[0], naxes[1], img->dtype);
 	// loop through all HDUs
+	KeyList *list = img->keylist;
 	for(i = 1; !(fits_movabs_hdu(fp, i, &hdutype, &fitsstatus)); ++i){
 		TRYFITS(fits_get_hdrpos, fp, &nkeys, &keypos);
-		int oldnkeys = img->keynum;
-		img->keynum += nkeys;
-		if(!(img->keylist = realloc(img->keylist, sizeof(char*) * img->keynum))){
+	/*	if(!(img->keylist = realloc(img->keylist, sizeof(char*) * img->keynum))){
 			ERR(_("Can't realloc"));
-		}
-		char **currec = &(img->keylist[oldnkeys]);
-	//	DBG("HDU # %d of %d keys", i, nkeys);
+		}*/
+	//	char **currec = &(img->keylist[oldnkeys]);
+		DBG("HDU # %d of %d keys", i, nkeys);
 		for(j = 1; j <= nkeys; ++j){
 			FITSFUN(fits_read_record, fp, j, card);
 			if(!fitsstatus){
-				*currec = MALLOC(char, FLEN_CARD);
-				memcpy(*currec, card, FLEN_CARD);
-		//		DBG("key %d: %s", oldnkeys + j, *currec);
-				++currec;
+				if(!list_add_record(&list, card)){
+					/// "Не могу добавить запись в список"
+					ERR(_("Can't add record to list"));
+				}
+				//*currec = MALLOC(char, FLEN_CARD);
+				//memcpy(*currec, card, FLEN_CARD);
+				DBG("key %d: %s", j, card);
+				//++currec;
 			}
 		}
+		img->keylist = list;
 	}
 	if(fitsstatus == END_OF_FILE){
 		fitsstatus = 0;
@@ -129,26 +269,25 @@ returning:
 		imfree(&img);
 	}
 	if(fits) *fits = img;
-	return ret;
+	return img;
 }
 
 bool writeFITS(char *filename, IMAGE *fits){
 	int w = fits->width, h = fits->height;
 	long naxes[2] = {w, h};
-	size_t sz = w * h, keys = fits->keynum;
+	size_t sz = w * h;
 	fitsfile *fp;
-
 	TRYFITS(fits_create_file, &fp, filename);
 	TRYFITS(fits_create_img, fp, fits->dtype, 2, naxes);
-
-	if(keys){ // there's keys
-		size_t i;
-		char **records = fits->keylist;
-		for(i = 0; i < keys; ++i){
-			char *rec = records[i];
+	if(fits->keylist){ // there's keys
+		KeyList *records = fits->keylist;
+		while(records){
+			char *rec = records->record;
+			records = records->next;
 			if(strncmp(rec, "SIMPLE", 6) == 0 || strncmp(rec, "EXTEND", 6) == 0) // key "file does conform ..."
 				continue;
-			else if(strncmp(rec, "COMMENT", 7) == 0) // comment of obligatory key in FITS head
+				// comment of obligatory key in FITS head
+			else if(strncmp(rec, "COMMENT   FITS", 14) == 0 || strncmp(rec, "COMMENT   and Astrophysics", 26) == 0)
 				continue;
 			else if(strncmp(rec, "NAXIS", 5) == 0 || strncmp(rec, "BITPIX", 6) == 0) // NAXIS, NAXISxxx, BITPIX
 				continue;
@@ -161,6 +300,19 @@ bool writeFITS(char *filename, IMAGE *fits){
 	TRYFITS(fits_write_img, fp, TDOUBLE, 1, sz, fits->data);
 	TRYFITS(fits_close_file, fp);
 	return TRUE;
+}
+
+/**
+ * create an empty image without headers, assign data type to "dtype"
+ */
+IMAGE *newFITS(size_t h, size_t w, int dtype){
+	size_t bufsiz = w*h;
+	IMAGE *out = MALLOC(IMAGE, 1);
+	out->data = MALLOC(Item, bufsiz);
+	out->width = w;
+	out->height = h;
+	out->dtype = dtype;
+	return out;
 }
 
 /**
@@ -182,11 +334,7 @@ IMAGE *similarFITS(IMAGE *img, int dtype){
 IMAGE *copyFITS(IMAGE *in){
 	IMAGE *out = similarFITS(in, in->dtype);
 	memcpy(out->data, in->data, sizeof(Item)*in->width*in->height);
-	size_t i, n = in->keynum;
-	out->keynum = n;
-	out->keylist = MALLOC(char*, n);
-	for(i = 0; i < n; ++i)
-		out->keylist[i] = strdup(in->keylist[i]);
+	out->keylist = list_copy(in->keylist);
 	return out;
 }
 

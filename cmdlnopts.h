@@ -1,5 +1,5 @@
 /*
- * cmdlnopts.h - comand line options for parceargs
+ * cmdlnopts.h - comand line options for parseargs
  *
  * Copyright 2013 Edward V. Emelianoff <eddy@sao.ru>
  *
@@ -23,7 +23,8 @@
 #ifndef __CMDLNOPTS_H__
 #define __CMDLNOPTS_H__
 
-#include "parceargs.h"
+#include "parseargs.h"
+#include "types.h"
 
 /*
  * here are some typedef's for global data
@@ -34,14 +35,17 @@ typedef struct{
 	int rest_pars_num;				// amount of "free" parameters
 	char **rest_pars;				// array of those parameters
 	char **conv;					// conversion pipeline parameters
+	int oper;						// operation with a lot of files (without '-i')
 } glob_pars;
 
 
 // default & global parameters
 extern glob_pars const Gdefault;
-extern int rewrite_ifexists, verbose_level, show_stat;
-glob_pars G;
+extern int rewrite_ifexists, verbose_level, show_stat, inplace;
+extern char **keys2delete, **recs2delete, **recs2add;
 
-glob_pars *parce_args(int argc, char **argv);
+extern glob_pars G;
+
+glob_pars *parse_args(int argc, char **argv);
 
 #endif // __CMDLNOPTS_H__
