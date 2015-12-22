@@ -363,14 +363,13 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp);
  */
 IMAGE *get_median(IMAGE *img, Filter *f, _U_ Itmarray *i){
 	int seed = f->w;
-	size_t w = img->width, h = img->height, siz = w*h, bufsiz = siz*sizeof(int);
-	IMAGE *out = similarFITS(img, img->dtype);
+	size_t w = img->width, h = img->height;
+	IMAGE *out = copyFITS(img);
 	Item *med = out->data, *inputima = img->data;
 	if(seed == 0){
 		get_adp_median_cross(img, out, 0);
 		return out;
 	}
-	memcpy(med, inputima, bufsiz);
 
 	size_t blksz = seed * 2 + 1, fullsz = blksz * blksz;
 #ifdef EBUG
@@ -537,13 +536,14 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp){
 		size_t curpix = x + w, // index of current pixel image arrays
 			y, ymax = h - 1;
 		for(y = 1; y < ymax; ++y, curpix += w){
-			Item s, l, md, *I = &inputima[curpix], Ival = *I;
+			Item md, *I = &inputima[curpix], Ival = *I;
 			memcpy(buffer, I - 1, 3*sizeof(Item));
 			buffer[3] = I[-w]; buffer[4] = I[w];
 			md = opt_med5(buffer);
-			s = ITM_EPSILON + MIN(buffer[0], buffer[1]);
-			l = MAX(buffer[3], buffer[4]) - ITM_EPSILON;
 			if(adp){
+				Item s, l;
+				s = ITM_EPSILON + MIN(buffer[0], buffer[1]);
+				l = MAX(buffer[3], buffer[4]) - ITM_EPSILON;
 				if(s < md && md < l){
 					if(s < Ival && Ival < l) med[curpix] = Ival;
 					else med[curpix] = md;
@@ -551,7 +551,7 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp){
 					med[curpix] = adp_med_5by5(img, x, y);
 				}
 			}else
-				med[curpix] = Ival;
+				med[curpix] = md;
 		}
 	}
 	// process corners (without adaptive)

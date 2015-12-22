@@ -56,17 +56,13 @@ glob_pars const Gdefault = {
 	,NULL		// rest_pars
 	,NULL		// conv
 	,MATH_NONE	// oper
+	,DBL_MAX	// low_bound
+	,DBL_MAX	// up_bound
+	,DBL_MAX	// binarize
+	,DBL_MAX	// conncomp4
+	,DBL_MAX	// conncomp8
 };
 
-/*
-// here are functions & definitions for complex parameters (with suboptions etc)
-bool get_mir_par(void *arg);
-const char MirPar[] = "set mirror parameters, arg=[diam=num:foc=num:Zincl=ang:Aincl=ang]\n" \
-		"\t\t\tALL DEGREES ARE IN FORMAT [+-][DDd][MMm][SS.S] like -10m13.4 !\n" \
-		"\t\tdiam  - diameter of mirror\n" \
-		"\t\tfoc   - mirror focus ratio\n" \
-		"\t\tZincl - inclination from Z axe\n" \
-		"\t\tAincl - azimuth of inclination";*/
 /// "установить параметры конвейера, аргументы: type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - список доступных для данного 'type' опций"
 const char FilPar[] = N_("set pipeline parameters, arg: type=type:[help]:...\n" \
 		"\t\ttype - transformation type (help for list)\n" \
@@ -105,6 +101,16 @@ myoption cmdlnopts[] = {
 	{"mean",	NO_ARGS,	&G.oper,MATH_MEAN,arg_none,	NULL,				N_("calculate mean of specified FITS-files")},
 	/// вычислить медиану всех перечисленных изображений
 	{"median",	NO_ARGS,	&G.oper,MATH_MEDIAN,arg_none,NULL,				N_("calculate median of specified FITS-files")},
+	/// нижняя граница, все значения интенсивности ниже нее будут установлены в нее
+	{"bottom",	NEED_ARG,	NULL,	'b',	arg_double,	APTR(&G.low_bound),	N_("the lowest value, all data less than 'bottom' vould be set to it")},
+	/// верхняя граница, все значения интенсивности выше нее будут установлены в нее
+	{"top",		NEED_ARG,	NULL,	't',	arg_double,	APTR(&G.up_bound),	N_("the lowest value, all data more than 'top' vould be set to it")},
+	/// бинаризация изображения по порогу (в %% от динамического диапазона)
+	{"binarize",NEED_ARG,	NULL,	'B',	arg_double,	APTR(&G.binarize),	N_("binarize image by threshold (in %%from dynamic range)")},
+	/// маркировать 4-связные области по заданному порогу
+	{"conn4",	NEED_ARG,	NULL,	'4',	arg_double,	APTR(&G.conncomp4),	N_("label 4-connected components with giventhreshold")},
+	/// маркировать 8-связные области по заданному порогу
+	{"conn8",	NEED_ARG,	NULL,	'8',	arg_double,	APTR(&G.conncomp8),	N_("label 8-connected components with giventhreshold")},
 	end_option
 };
 

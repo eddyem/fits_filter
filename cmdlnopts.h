@@ -36,6 +36,11 @@ typedef struct{
 	char **rest_pars;				// array of those parameters
 	char **conv;					// conversion pipeline parameters
 	int oper;						// operation with a lot of files (without '-i')
+	double low_bound;				// lower bound (all values less than this would be set to this)
+	double up_bound;				// all values greater this vould be set to this
+	double binarize;				// binarize by threshold (in %from dynamic range)
+	double conncomp4;				// threshold for conncomp4
+	double conncomp8;				// threshold for conncomp8
 } glob_pars;
 
 

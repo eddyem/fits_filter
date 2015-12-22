@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <fitsio.h>
+#include <stdint.h>
 
 /*
 cfitsio.h BITPIX code values for FITS image types:
@@ -64,6 +65,7 @@ bool writeFITS(char *filename, IMAGE *fits);
 IMAGE *newFITS(size_t h, size_t w, int dtype);
 IMAGE *similarFITS(IMAGE *in, int dtype);
 IMAGE *copyFITS(IMAGE *in);
+IMAGE *buildFITSfromdat(size_t h, size_t w, int dtype, uint8_t *indata);
 
 extern struct stat filestat;
 char* make_filename(char *buff, size_t buflen, char *prefix, char *suffix);

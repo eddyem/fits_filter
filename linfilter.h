@@ -25,6 +25,7 @@
 #include "types.h"
 #include "fits.h"
 #include "convfilter.h"
+#include "stdint.h"
 
 // f->h for STEP filter
 typedef enum{
@@ -45,5 +46,9 @@ extern stepscalespairs scales[];
 void get_statictics(IMAGE *img, Item *min, Item *max,
 					Item *mean, Item *std, Item *med);
 IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale);
+
+void cut_bounds(IMAGE *img, Item low, Item up);
+uint16_t *binarize(IMAGE *img, double threshold, Item *thrval);
+IMAGE *get_binary(IMAGE *img, double thres);
 
 #endif // __LINFILTER_H__

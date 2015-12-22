@@ -28,6 +28,7 @@
 #include "cmdlnopts.h"
 #include "pipeline.h"
 #include "group_operations.h"
+#include "binmorph.h"
 
 #ifndef BUFF_SIZ
 #define BUFF_SIZ 4096
@@ -140,6 +141,28 @@ int main(int argc, char **argv){
 				min, max, mean, std, med);
 	}
 	if(!newfit) newfit = fits;
+	// process cuts & so on
+	cut_bounds(newfit, G.low_bound, G.up_bound);
+	if(!newfit) signals(-1);
+	// here are operations that can't be done together
+	if(G.binarize < DBL_MAX - 1.){
+		IMAGE *tmp = get_binary(newfit, G.binarize);
+		imfree(&newfit);
+		newfit = tmp;
+	}else if(G.conncomp4 < DBL_MAX - 1.){
+		size_t n;
+		IMAGE *tmp = cclabel4(newfit, G.conncomp4, &n);
+		imfree(&newfit);
+		newfit = tmp;
+		green("Found %d 4-connected regions\n", n);
+	}else if(G.conncomp8 < DBL_MAX - 1.){
+		size_t n;
+		IMAGE *tmp = cclabel8(newfit, G.conncomp8, &n);
+		imfree(&newfit);
+		newfit = tmp;
+		green("Found %d 8-connected regions\n", n);
+	}
+	if(!newfit) signals(-1);
 	/**************************************************************************************************************
 	 *
 	 * place here any other operations with [processed through pipeline] input file or result of group operations
@@ -166,24 +189,6 @@ int main(int argc, char **argv){
 		}while(*(++recs2add));
 	}
 	writeFITS(G.outfile, newfit);
-/*
-	IMAGE *newfit = get_median(fits, 2);
-	Filter f = {LAPGAUSS, 200, 200, atoi(argv[3]), atoi(argv[3])};
-	IMAGE *newf = DiffFilter(newfit, &f);
-	Filter f1 = {STEP, 3, LOG, 0, 0};
-	IMAGE *newfits = StepFilter(newf, &f1, NULL);
 
-	//IMAGE *newfit = get_median(fits, atoi(argv[3]));
-	//IMAGE *newfits = GradFilterSimple(newfit);
-
-	//Filter f = {STEP, atoi(argv[3]), POW, 0, 0};
-	//Item *levels;
-	//IMAGE *newfits = StepFilter(fits, &f, &levels);
-	//FREE(levels);
-	newfits->keylist = fits->keylist;
-	writeFITS(G.outfile, newfits);
-	imfree(&fits);
-	FREE(newfits->data); FREE(newfits);
-	*/
 	return 0;
 }

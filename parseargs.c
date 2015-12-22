@@ -208,10 +208,18 @@ void parseargs(int *argc, char ***argv, myoption *options){
 	short_options = calloc(optsize * 3 + 1, 1); // multiply by three for '::' in case of args in opts
 	long_options = calloc(optsize + 1, sizeof(struct option));
 	opts = options; loptr = long_options; soptr = short_options;
+	// in debug mode check the parameters are not repeated
+#ifdef EBUG
+	char **longlist = MALLOC(char*, optsize);
+	char *shortlist = MALLOC(char, optsize);
+#endif
 	// fill short/long parameters and make a simple checking
 	for(i = 0; i < optsize; i++, loptr++, opts++){
 		// check
 		assert(opts->name); // check name
+#ifdef EBUG
+		longlist[i] = strdup(opts->name);
+#endif
 		if(opts->has_arg){
 			assert(opts->type != arg_none); // check error with arg type
 			assert(opts->argptr);  // check pointer
@@ -226,6 +234,9 @@ void parseargs(int *argc, char ***argv, myoption *options){
 		loptr->val		= opts->val;
 		// fill short options if they are:
 		if(!opts->flag){
+#ifdef EBUG
+			shortlist[i] = (char) opts->val;
+#endif
 			*soptr++ = opts->val;
 			if(loptr->has_arg) // add ':' if option has required argument
 				*soptr++ = ':';
@@ -233,6 +244,33 @@ void parseargs(int *argc, char ***argv, myoption *options){
 				*soptr++ = ':';
 		}
 	}
+	printf("short: %s", short_options);
+	// sort all lists & check for repeating
+#ifdef EBUG
+	int cmpstringp(const void *p1, const void *p2){
+		return strcmp(* (char * const *) p1, * (char * const *) p2);
+	}
+	int cmpcharp(const void *p1, const void *p2){
+		return (int)(*(char * const)p1 - *(char *const)p2);
+	}
+	qsort(longlist, optsize, sizeof(char *), cmpstringp);
+	qsort(shortlist,optsize, sizeof(char), cmpcharp);
+	char *prevl = longlist[0], prevshrt = shortlist[0];
+	for(i = 1; i < optsize; ++i){
+		if(longlist[i]){
+			if(prevl){
+				if(strcmp(prevl, longlist[i]) == 0) ERRX("double long arguments: --%s", prevl);
+			}
+			prevl = longlist[i];
+		}
+		if(shortlist[i]){
+			if(prevshrt){
+				if(prevshrt == shortlist[i]) ERRX("double short arguments: -%c", prevshrt);
+			}
+			prevshrt = shortlist[i];
+		}
+	}
+#endif
 	// now we have both long_options & short_options and can parse `getopt_long`
 	while(1){
 		int opt;
@@ -359,7 +397,7 @@ void showhelp(int oindex, myoption *options){
 	qsort(opts, N, sizeof(myoption), argsort);
 	do{
 		int p = sprintf(buf, "  "); // a little indent
-		if(!opts->flag && isalpha(opts->val)) // .val is short argument
+		if(!opts->flag) // .val is short argument
 			p += snprintf(buf+p, bufsz-p, "-%c, ", opts->val);
 		p += snprintf(buf+p, bufsz-p, "--%s", opts->name);
 		if(opts->has_arg == 1) // required argument

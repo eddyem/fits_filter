@@ -316,6 +316,60 @@ IMAGE *newFITS(size_t h, size_t w, int dtype){
 }
 
 /**
+ * build IMAGE image from data array indata
+ */
+IMAGE *buildFITSfromdat(size_t h, size_t w, int dtype, uint8_t *indata){
+	size_t stride = 0;
+	double (*fconv)(uint8_t *data) = NULL;
+	double ubyteconv(uint8_t *data){return (double)*data;}
+	double ushortconv(uint8_t *data){return (double)*(int16_t*)data;}
+	double ulongconv(uint8_t *data){return (double)*(uint32_t*)data;}
+	double ulonglongconv(uint8_t *data){return (double)*(uint64_t*)data;}
+	double floatconv(uint8_t *data){return (double)*(float*)data;}
+	IMAGE *out = newFITS(h, w, dtype);
+	switch (dtype){
+		case BYTE_IMG:
+			stride = 1;
+			fconv = ubyteconv;
+		break;
+		case SHORT_IMG:
+			stride = 2;
+			fconv = ushortconv;
+		break;
+		case LONG_IMG:
+			stride = 4;
+			fconv = ulongconv;
+		break;
+		case FLOAT_IMG:
+			stride = 4;
+			fconv = floatconv;
+		break;
+		case LONGLONG_IMG:
+			fconv = ulonglongconv;
+			stride = 8;
+		break;
+		case DOUBLE_IMG:
+			memcpy(out->data, indata, sizeof(double)*w*h);
+			return out;
+		break;
+		default:
+		/// Неправильный тип данных
+			ERRX(_("Wrong data type"));
+	}
+	size_t y, W = w*stride;
+	Item *data = out->data;
+	OMP_FOR(shared(data))
+	for(y = 0; y < h; ++y){
+		Item *dout = &data[y*w];
+		uint8_t *din = &indata[y*W];
+		size_t x;
+		for(x = 0; x < w; ++x, din += stride)
+			*dout++ = fconv(din);
+	}
+	return out;
+}
+
+/**
  * create an empty copy of image "in" without headers, assign data type to "dtype"
  */
 IMAGE *similarFITS(IMAGE *img, int dtype){
@@ -329,7 +383,7 @@ IMAGE *similarFITS(IMAGE *img, int dtype){
 }
 
 /**
- * make full copi of image 'in'
+ * make full copy of image 'in'
  */
 IMAGE *copyFITS(IMAGE *in){
 	IMAGE *out = similarFITS(in, in->dtype);

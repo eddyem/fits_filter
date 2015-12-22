@@ -222,3 +222,91 @@ IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
 	DBG("SF: %d sublevels, step=%g, time=%f\n", f->w, step, dtime()-t0);
 	return out;
 }
+
+/**
+ * set all values more than 'up' to 'up & less than 'low' to 'low'
+ */
+void cut_bounds(IMAGE *img, Item low, Item up){
+	if(!(low < DBL_MAX - 1. || up < DBL_MAX - 1.)) return;
+	Item min, max;
+	bool lowct = FALSE, upct = FALSE;
+	get_statictics(img, &min, &max, NULL, NULL, NULL);
+	if(low < DBL_MAX - 1.)
+		lowct = TRUE;
+	if(up < DBL_MAX - 1.)
+		upct = TRUE;
+	int w = img->width, h = img->height, y;
+	OMP_FOR(shared(img))
+	for(y = 0; y < h; ++y){
+		Item *data = &img->data[y * w];
+		int x;
+		for(x = 0; x < w; ++x, ++data){
+			if(lowct && *data < low) *data = low;
+			else if(upct && *data > up) *data = up;
+		}
+	}
+	char buf[80];
+	if(lowct && !upct)
+		snprintf(buf, 80, "COMMENT cut lower bound to value %g", (double)low);
+	else if(upct && !lowct)
+		snprintf(buf, 80, "COMMENT cut upper bound to value %g", (double)up);
+	else
+		snprintf(buf, 80, "COMMENT cut lower bound to %g & upper to %g", (double)low, (double)up);
+	list_add_record(&img->keylist, buf);
+}
+
+/**
+ * Convert image to binary
+ * image values [min, max] converted to [0, 1]
+ * threshold \in (0, 1)
+ * (I < threshold) = 0, (I >= threshold) = 1
+ *
+ * if threshold less than 0 image would be inverted!
+ *
+ * @param thrvalue (o) - threshold intensity level
+ */
+uint16_t *binarize(IMAGE *img, double threshold, Item *thrvalue){
+	DBG("THRES: %g", threshold);
+	if(threshold < -1. + DBL_EPSILON || threshold > 1. - DBL_EPSILON){
+		/// Пороговое значение должно лежать в интервале (-1, 1)
+		WARNX(_("The threshold value should be in interval (-1, 1)"));
+		return NULL;
+	}
+	bool invert = FALSE;
+	if(threshold < 0.){
+		threshold = -threshold;
+		invert = TRUE;
+	}
+	Item min, max;
+	get_statictics(img, &min, &max, NULL, NULL, NULL);
+	Item thrval = min + (max - min) * threshold;
+	int w = img->width, h = img->height, y;
+	uint16_t *ret = MALLOC(uint16_t, w*h);
+	OMP_FOR(shared(img))
+	for(y = 0; y < h; ++y){
+		Item *idata = &img->data[y * w];
+		uint16_t *odata = &ret[y * w];
+		int x;
+		for(x = 0; x < w; ++x, ++idata, ++odata){
+			if(*idata < thrval) *odata = invert;
+			else *odata = !invert;
+		}
+	}
+	if(thrvalue) *thrvalue = thrval;
+	return ret;
+}
+
+IMAGE *get_binary(IMAGE *img, double threshold){
+	Item thrval;
+	uint16_t *binary = binarize(img, threshold, &thrval);
+	if(!binary) return NULL;
+	IMAGE *ret = buildFITSfromdat(img->height, img->width, SHORT_IMG, (uint8_t*)binary);
+	FREE(binary);
+	char buf[80];
+	snprintf(buf, 80, "COMMENT binarize image by threshold value %g", (double)thrval);
+	list_add_record(&ret->keylist, buf);
+	snprintf(buf, 80, "COMMENT    (%g%% fromdata range%s)", fabs(threshold)*100.,
+		(threshold < 0.) ? ", inverted" : "");
+	list_add_record(&ret->keylist, buf);
+	return ret;
+}

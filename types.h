@@ -28,9 +28,11 @@
 #endif
 
 #ifndef DBL_EPSILON
-#define DBL_EPSILON        2.2204460492503131e-16
+#define DBL_EPSILON    (2.2204460492503131e-16)
 #endif
-
+#ifndef DBL_MAX
+#define DBL_MAX        (1.7976931348623157e+308)
+#endif
 
 typedef double Item;
 // ITM_EPSILON is for data comparing, set it to zero for integer types
