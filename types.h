@@ -34,7 +34,6 @@
 #define DBL_MAX        (1.7976931348623157e+308)
 #endif
 
-typedef double Item;
 // ITM_EPSILON is for data comparing, set it to zero for integer types
 #define ITM_EPSILON  DBL_EPSILON
 

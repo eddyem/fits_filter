@@ -244,7 +244,6 @@ void parseargs(int *argc, char ***argv, myoption *options){
 				*soptr++ = ':';
 		}
 	}
-	printf("short: %s", short_options);
 	// sort all lists & check for repeating
 #ifdef EBUG
 	int cmpstringp(const void *p1, const void *p2){

@@ -61,6 +61,7 @@ glob_pars const Gdefault = {
 	,DBL_MAX	// binarize
 	,DBL_MAX	// conncomp4
 	,DBL_MAX	// conncomp8
+	,NULL		// flip (X, Y, XY, NULL)
 };
 
 /// "установить параметры конвейера, аргументы: type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - список доступных для данного 'type' опций"
@@ -111,6 +112,8 @@ myoption cmdlnopts[] = {
 	{"conn4",	NEED_ARG,	NULL,	'4',	arg_double,	APTR(&G.conncomp4),	N_("label 4-connected components with giventhreshold")},
 	/// маркировать 8-связные области по заданному порогу
 	{"conn8",	NEED_ARG,	NULL,	'8',	arg_double,	APTR(&G.conncomp8),	N_("label 8-connected components with giventhreshold")},
+	/// зеркалировать изображение
+	{"flip",	NEED_ARG,	NULL,	0,		arg_string,	APTR(&G.flip),		N_("flip image (arg = X, Y or XY)")},
 	end_option
 };
 

@@ -38,6 +38,44 @@ void signals(int signo){
 	exit(signo);
 }
 
+#define swap_el(a, b)  {register Item t = a; a = b; b = t;}
+/**
+ * flip an image by X-axis (top <-> bottom)
+ */
+void flip_X(IMAGE *f){
+	if(!f){
+		WARNX("Empty arg!");
+		return;
+	}
+	int w = f->width, h = f->height, h2 = h/2;
+	OMP_FOR()
+	for(int _col = 0; _col < w; ++_col){
+		Item *pixa = &f->data[_col], *pixb = pixa + w*(h-1); // first & last pixels in column
+		for(int _row = 0; _row < h2; ++_row, pixa += w, pixb -= w){
+			swap_el(*pixa, *pixb);
+		}
+	}
+}
+/**
+ * flip an image by Y-axis (left <-> right)
+ */
+void flip_Y(IMAGE *f){
+	if(!f){
+		WARNX("Empty arg!");
+		return;
+	}
+	int w = f->width, h = f->height, w2 = w/2;
+	OMP_FOR()
+	for(int _row = 0; _row < h; ++_row){
+		Item *pixa = &f->data[_row*w], *pixb = pixa + w - 1; // first & last pixels in row
+		for(int _col= 0; _col < w2; ++_col, ++pixa, --pixb){
+			swap_el(*pixa, *pixb);
+		}
+	}
+}
+
+
+
 int main(int argc, char **argv){
 	IMAGE *fits = NULL, *newfit = NULL;
 	bool pipe_needed = FALSE;
@@ -187,6 +225,13 @@ int main(int argc, char **argv){
 		do{
 			list_add_record(&newfit->keylist, *recs2add);
 		}while(*(++recs2add));
+	}
+
+	// process flipping
+	if(G.flip){
+		char *flip = G.flip;
+		if(strchr(flip, 'x') || strchr(flip, 'X')) flip_X(newfit);
+		if(strchr(flip, 'y') || strchr(flip, 'Y')) flip_Y(newfit);
 	}
 	writeFITS(G.outfile, newfit);
 

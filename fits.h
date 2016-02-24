@@ -27,6 +27,8 @@
 #include <fitsio.h>
 #include <stdint.h>
 
+typedef double Item;
+
 /*
 cfitsio.h BITPIX code values for FITS image types:
 #define BYTE_IMG      8
@@ -46,7 +48,7 @@ typedef struct{
 	int width;			// width
 	int height;			// height
 	int dtype;			// data type
-	double *data;		// picture data
+	Item *data;			// picture data
 	KeyList *keylist;	// list of options for each key
 } IMAGE;
 

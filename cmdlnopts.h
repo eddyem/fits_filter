@@ -41,7 +41,9 @@ typedef struct{
 	double binarize;				// binarize by threshold (in %from dynamic range)
 	double conncomp4;				// threshold for conncomp4
 	double conncomp8;				// threshold for conncomp8
+	char *flip;						// parameters for flipping
 } glob_pars;
+
 
 
 // default & global parameters
