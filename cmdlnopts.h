@@ -42,6 +42,8 @@ typedef struct{
 	double conncomp4;				// threshold for conncomp4
 	double conncomp8;				// threshold for conncomp8
 	char *flip;						// parameters for flipping
+	int deltabs;					// delete all tables
+	int listabs;					// list all tables from input file
 } glob_pars;
 
 

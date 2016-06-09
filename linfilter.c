@@ -203,9 +203,9 @@ IMAGE *StepFilter(IMAGE *img, Filter *f, Itmarray *scale){
 		list_modify_key(img->keylist, "DATAMIN", "0");
 		snprintf(buf, 21, "%d", f->w);
 		list_modify_key(img->keylist, "DATAMAX", buf);
-		snprintf(buf, 80, "COMMENT step filter with %d levels (%s distribution)",
-			f->w, scales[f->h].name);
-		list_add_record(&img->keylist, buf);
+	//	snprintf(buf, 80, "HISTORY step filter with %d levels (%s distribution)",
+	//		f->w, scales[f->h].name);
+	//	list_add_record(&img->keylist, buf);
 	}
 	IMAGE *out = similarFITS(img, BYTE_IMG);
 	Item *res = out->data, *inputima = img->data;

@@ -21,8 +21,6 @@
 #include <string.h>
 #include "pipeline.h"
 #include "cmdlnopts.h"
-#include "convfilter.h"
-#include "linfilter.h"
 #include "usefull_macros.h"
 #include "convfilter.h"
 #include "linfilter.h"
@@ -133,8 +131,8 @@ Filter *parse_filter(char *pars){
 		return NULL;
 	}else{
 		if(!popts.ftype){ // no type given
-			/// "Необходимо по крайней мере задать параметр 'type', например: '-c type=help'"
-			ERRX(_("You should at least give parameter 'type', for example: '-c type=help'"));
+			/// "Необходимо по крайней мере задать параметр 'type', например: '-p type=help'"
+			ERRX(_("You should at least give parameter 'type', for example: '-p type=help'"));
 		}
 		DBG("type: %s", popts.ftype);
 		if(strcmp(popts.ftype, "help") == 0){ // info about pipeline names
@@ -159,6 +157,7 @@ Filter *parse_filter(char *pars){
 	}
 	fltr = MALLOC(Filter, 1);
 	fltr->FilterType = filter_names[idx].FilterType;
+	fltr->name = strdup(filter_names[idx].parname);
 	popts.imfunc = filter_names[idx].imfunc;
 	DBG("idx: %d, ftype: %d", idx, fltr->FilterType);
 	// check parameters & fill Filer fields
@@ -250,7 +249,6 @@ IMAGE *process_pipeline(IMAGE *image){
 	size_t i;
 	Filter **far = farray;
 	IMAGE *in = copyFITS(image); // copy original image to leave it unchanged
-	in->keylist = list_copy(image->keylist);
 	IMAGE *processed = NULL;
 	for(i = 0; i < farray_size; ++i, ++far){
 		Filter *f = *far;
@@ -264,14 +262,44 @@ IMAGE *process_pipeline(IMAGE *image){
 		// TODO: what should I do with oarg???
 		if(oarg.size){
 			size_t i, l = oarg.size;
-			green("got oarg: \n");
-			for(i = 0; i < l; ++i){
-				printf("%5zd: %g\n", i, oarg.data[i]);
+			//if(verbose_level){
+				green("got oarg: \n");
+				for(i = 0; i < l; ++i){
+					printf("%5zd: %g\n", i, oarg.data[i]);
+				}
+			//}
+			char tabname[80];
+			snprintf(tabname, 80, "%s_CONVERSION", f->name);
+			FITStable *tab = table_new(processed, tabname);
+			if(tab){
+				table_column col = {
+					.width = sizeof(int32_t),
+					.repeat = l,
+					.coltype = TINT
+				};
+				int32_t *levls = MALLOC(int32_t, l);
+				for(i = 0; i < l; ++i) levls[i] = (int32_t) i;
+				col.contents = levls;
+				sprintf(col.colname, "level");
+				*col.unit = 0;
+				table_addcolumn(tab, &col);
+				FREE(levls);
+				col.contents = oarg.data;
+				col.coltype = TDOUBLE;
+				col.width = sizeof(double),
+				sprintf(col.colname, "value");
+				sprintf(col.unit, "ADU");
+				table_addcolumn(tab, &col);
+				printf("Create table:\n");
+				table_print(tab);
 			}
 			FREE(oarg.data);
 		}
 		processed->keylist = in->keylist;
-		// TODO: what's about writting changes into HISTORY?
+		char changes[FLEN_CARD];
+		snprintf(changes, FLEN_CARD, "HISTORY modified by routine %s",  f->name);
+		list_add_record(&(processed->keylist), changes);
+		//list_print(processed->keylist);
 		in->keylist = NULL; // prevent deleting global keylist
 		imfree(&in);
 		in = processed;

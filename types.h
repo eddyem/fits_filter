@@ -70,6 +70,7 @@ typedef struct{
 }Itmarray;
 
 typedef struct _Filter{
+	char *name;			// filter name
 	FType FilterType;	// filter type
 	int w;				// filter width
 	int h;				// height

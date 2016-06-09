@@ -50,18 +50,20 @@ char **keys2delete = NULL  // keylist for deletion
 //            DEFAULTS
 // default global parameters
 glob_pars const Gdefault = {
-	 NULL		// infile
-	,NULL		// outfile
-	,0			// rest_pars_num
-	,NULL		// rest_pars
-	,NULL		// conv
-	,MATH_NONE	// oper
-	,DBL_MAX	// low_bound
-	,DBL_MAX	// up_bound
-	,DBL_MAX	// binarize
-	,DBL_MAX	// conncomp4
-	,DBL_MAX	// conncomp8
-	,NULL		// flip (X, Y, XY, NULL)
+	 .infile = NULL
+	,.outfile = NULL
+	,.rest_pars_num = 0
+	,.rest_pars = NULL
+	,.conv = NULL
+	,.oper = MATH_NONE
+	,.low_bound = DBL_MAX
+	,.up_bound = DBL_MAX
+	,.binarize = DBL_MAX
+	,.conncomp4 = DBL_MAX
+	,.conncomp8 = DBL_MAX
+	,.flip = NULL
+	,.deltabs = 0
+	,.listabs = 0
 };
 
 /// "установить параметры конвейера, аргументы: type:[help]:...\n\t\ttype - тип преобразования (help для справки)\n\t\thelp - список доступных для данного 'type' опций"
@@ -109,11 +111,13 @@ myoption cmdlnopts[] = {
 	/// бинаризация изображения по порогу (в %% от динамического диапазона)
 	{"binarize",NEED_ARG,	NULL,	'B',	arg_double,	APTR(&G.binarize),	N_("binarize image by threshold (in %%from dynamic range)")},
 	/// маркировать 4-связные области по заданному порогу
-	{"conn4",	NEED_ARG,	NULL,	'4',	arg_double,	APTR(&G.conncomp4),	N_("label 4-connected components with giventhreshold")},
+	{"conn4",	NEED_ARG,	NULL,	'4',	arg_double,	APTR(&G.conncomp4),	N_("label 4-connected components with given threshold")},
 	/// маркировать 8-связные области по заданному порогу
-	{"conn8",	NEED_ARG,	NULL,	'8',	arg_double,	APTR(&G.conncomp8),	N_("label 8-connected components with giventhreshold")},
+	{"conn8",	NEED_ARG,	NULL,	'8',	arg_double,	APTR(&G.conncomp8),	N_("label 8-connected components with given threshold")},
 	/// зеркалировать изображение
-	{"flip",	NEED_ARG,	NULL,	0,		arg_string,	APTR(&G.flip),		N_("flip image (arg = X, Y or XY)")},
+	{"flip",	NEED_ARG,	NULL,	'f',		arg_string,	APTR(&G.flip),		N_("flip image (arg = X, Y or XY)")},
+	{"no-tabs",	NO_ARGS,	&G.deltabs,1,	arg_none,	NULL,				N_("don't save any tables in output file")},
+	{"list-tabs",NO_ARGS,	&G.listabs,1,	arg_none,	NULL,				N_("List all tables in input file")},
 	end_option
 };
 

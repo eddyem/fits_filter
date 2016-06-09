@@ -109,7 +109,7 @@ int main(int argc, char **argv){
 	if(!G.outfile){ // user didn't write out file name - check for prefix
 		if(inplace){ // G.outfile is the same as G.infile
 			G.outfile = G.infile;
-		}else{
+		}else if(!show_stat && !G.listabs){
 			if(!G.rest_pars_num){
 				/// "Задайте имя выходного файла (-o) или его префикс (без ключа)"
 				ERRX(_("Set output file name (-o) or its prefix (without key)"));
@@ -145,6 +145,7 @@ int main(int argc, char **argv){
 			printf("min = %g, max = %g, mean = %g, std = %g, median = %g\n",
 					min, max, mean, std, med);
 		}
+		if(G.listabs) table_print_all(fits);
 	}else{ // G.oper != MATH_NONE or some other (in future?)
 		if(G.oper != MATH_NONE){ // process all files to make group operation
 			if(G.rest_pars_num < 2){
@@ -200,7 +201,7 @@ int main(int argc, char **argv){
 		newfit = tmp;
 		green("Found %d 8-connected regions\n", n);
 	}
-	if(!newfit) signals(-1);
+	if(!newfit) return 0;
 	/**************************************************************************************************************
 	 *
 	 * place here any other operations with [processed through pipeline] input file or result of group operations

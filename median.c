@@ -112,7 +112,6 @@ Item opt_med16(Item *p){
 	PIX_SORT(12, 13); PIX_SORT(14, 15); PIX_SORT(1, 8); PIX_SORT(3, 10);
 	PIX_SORT(5, 12); PIX_SORT(7, 14); PIX_SORT(5, 8); PIX_SORT(7, 10);
 	return (p[7] + p[8]) * 0.5;
-
 }
 Item opt_med25(Item *p){
 	PIX_SORT(0, 1)  ; PIX_SORT(3, 4)  ; PIX_SORT(2, 4) ;
@@ -151,8 +150,6 @@ Item opt_med25(Item *p){
 	return (p[12]);
 }
 #undef PIX_SORT
-#undef ELEM_SWAP
-#define ELEM_SWAP(a, b) {register Item t = a; a = b; b = t;}
 #define PIX_SORT(a, b)  {if (a > b) ELEM_SWAP(a, b);}
 /**
  * quick select - algo for approximate median calculation for array idata of size n
@@ -219,8 +216,6 @@ Item calc_median(Item *idata, int n){
 		return quick_select(idata, n);
 	}
 }
-
-
 
 #define ItemLess(a,b) ((a)<(b))
 #define ItemMean(a,b) (((a)+(b))/2)
@@ -291,7 +286,6 @@ int maxSortUp(Mediator* m, int i){
 
 /*--- Public Interface ---*/
 
-
 //creates new Mediator: to calculate `nItems` running median.
 //mallocs single block of memory, caller must free.
 Mediator* MediatorNew(int nItems){
@@ -308,7 +302,6 @@ Mediator* MediatorNew(int nItems){
 	}
 	return m;
 }
-
 
 //Inserts item, maintains median in O(lg nItems)
 void MediatorInsert(Mediator* m, Item v){
@@ -566,19 +559,19 @@ static void get_adp_median_cross(IMAGE *img, IMAGE *out, int adp){
 	buf[0] = iptr[0]; buf[1] = iptr[0];
 	buf[2] = iptr[-1]; buf[3] = iptr[w - 1];
 	buf[4] = iptr[w];
-	med[0] = opt_med5(buf);
+	med[w - 1] = opt_med5(buf);
 	// left bottom
 	iptr = &inputima[(h - 1) * w];
 	buf[0] = iptr[0]; buf[1] = iptr[0];
 	buf[2] = iptr[-w]; buf[3] = iptr[1 - w];
 	buf[4] = iptr[1];
-	med[0] = opt_med5(buf);
+	med[(h - 1) * w] = opt_med5(buf);
 	// right bottom
 	iptr = &inputima[h * w - 1];
 	buf[0] = iptr[0]; buf[1] = iptr[0];
 	buf[2] = iptr[-w-1]; buf[3] = iptr[-w];
 	buf[4] = iptr[-1];
-	med[0] = opt_med5(buf);
+	med[h * w - 1] = opt_med5(buf);
 	// process borders without corners
 	// top
 	OMP_FOR(shared(med))
