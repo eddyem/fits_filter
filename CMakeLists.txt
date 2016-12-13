@@ -21,7 +21,7 @@ add_definitions(-DTHREAD_NUMBER=${PROCESSOR_COUNT})
 message("In multithreaded operations will use ${PROCESSOR_COUNT} threads")
 
 # default flags
-set(CFLAGS -O2 -Wextra -Wall -Werror -W -std=gnu99)
+set(CFLAGS -O2 -Wextra -Wall -Werror -W -Wno-trampolines -std=gnu99)
 
 set(CMAKE_COLOR_MAKEFILE ON)
 
@@ -130,7 +130,7 @@ add_definitions(${CFLAGS} -DLOCALEDIR=\"${LOCALEDIR}\"
 #endif()
 
 # -l
-target_link_libraries(${PROJ} ${${PROJ}_LIBRARIES})
+target_link_libraries(${PROJ} ${${PROJ}_LIBRARIES} -lm)
 
 # Installation of the program
 INSTALL(FILES ${MO_FILE} DESTINATION "share/locale/ru/LC_MESSAGES")

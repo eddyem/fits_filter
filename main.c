@@ -171,6 +171,7 @@ int main(int argc, char **argv){
 	// process pipeline both in case of single input file ('-i')
 	if(pipe_needed)
 		newfit = process_pipeline(fits);
+
 	if(show_stat && newfit){
 		Item min, max, mean, std, med;
 		get_statictics(newfit, &min, &max, &mean, &std, &med);

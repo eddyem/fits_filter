@@ -316,11 +316,17 @@ FITStable *table_read(IMAGE *img, fitsfile *fp){
 		void *array = malloc(width*repeat);
 		if(!array) ERRX("malloc");
 		int anynul;
-		FITSFUN(fits_read_col, fp, typecode, i, 1, 1, repeat, NULL, array, &anynul);
-		if(fitsstatus){
-			WARNX(_("Can't read column %d!"), i);
-			continue;
+		int64_t nullval = 0;
+		int j;
+		for(j = 0; j < repeat; ++j){
+			FITSFUN(fits_read_col, fp, typecode, i, j=1, 1, 1, (void*)nullval, array, &anynul);
+			if(fitsstatus){
+				WARNX(_("Can't read column %d row %d!"), i, j);
+				continue;
+			}
 		}
+		DBG("done");
+		continue;
 		col.contents = array;
 		char keyword[FLEN_KEYWORD];
 		int stat = 0;
@@ -332,7 +338,9 @@ FITStable *table_read(IMAGE *img, fitsfile *fp){
 		if(stat){WARNX("???"); stat = 0;}
 		fits_read_key(fp, TSTRING, keyword, col.unit, NULL, &stat);
 		if(stat) *col.unit = 0;
-		table_addcolumn(tbl, &col);
+		DBG("Column, cont[2]=%d, type=%d, w=%ld, r=%ld, nm=%s, u=%s", ((int*)col.contents)[2], col.coltype,
+			col.width, col.repeat, col.colname, col.unit);
+		//table_addcolumn(tbl, &col);
 		FREE(array);
 	}
 //	DBG("fits_create_tbl nrows=%zd, ncols=%zd, colnms[0]=%s, formats[0]=%s, "
@@ -612,7 +620,6 @@ IMAGE* readFITS(char *filename, IMAGE **fits){
 	long naxes[2];
 	char card[FLEN_CARD];
 	IMAGE *img = MALLOC(IMAGE, 1);
-
 	TRYRET(fits_open_file, &fp, filename, READONLY);
 	FITSFUN(fits_get_num_hdus, fp, &hdunum);
 	if(hdunum < 1){
@@ -691,6 +698,7 @@ returning:
 }
 
 bool writeFITS(char *filename, IMAGE *fits){
+	if(!filename || !fits) return FALSE;
 	int w = fits->width, h = fits->height;
 	long naxes[2] = {w, h};
 	size_t sz = w * h;
