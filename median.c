@@ -386,7 +386,7 @@ IMAGE *get_median(IMAGE *img, Filter *f, _U_ Itmarray *i){
 				MediatorInsert(m, inputima[xx]);
 			med[medidx] = MediatorMedian(m);
 		}
-		free(m);
+		FREE(m);
 	}
 	DBG("time for median filtering %zdx%zd of image %zdx%zd: %gs", blksz, blksz, w, h,
 		dtime() - t0);
@@ -662,7 +662,7 @@ IMAGE *get_adaptive_median(IMAGE *img, Filter *f, _U_ Itmarray *i){
 					med[curpos] = adp_med_5by5(img, x, y);
 			}
 		}
-		free(m);
+		FREE(m);
 	}
 	DBG("time for adadptive median filtering %zdx%zd of image %zdx%zd: %gs", blksz, blksz, w, h,
 		dtime() - t0);
