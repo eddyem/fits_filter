@@ -32,144 +32,191 @@ typedef IMAGE * (*mathfuncptr)(IMAGE **files);
  * calculate minimal sizes in list of images
  */
 static void get_minsizes(int *minh, int *minw, IMAGE **infiles){
-	FNAME();
-	int hmin = (*infiles)->height, wmin = (*infiles)->width;
-	DBG("initial min size: %dx%d", wmin, hmin);
-	while(*(++infiles)){
-		int h = (*infiles)->height, w = (*infiles)->width;
-		DBG("process image with h=%d, w=%d", h, w);
-		if(hmin > h) hmin = h;
-		if(wmin > w) wmin = w;
-	}
-	if(minh) *minh = hmin;
-	if(minw) *minw = wmin;
-	DBG("minimal sizes: %dx%d", wmin, hmin);
+    FNAME();
+    int hmin = (*infiles)->height, wmin = (*infiles)->width;
+    DBG("initial min size: %dx%d", wmin, hmin);
+    while(*(++infiles)){
+        int h = (*infiles)->height, w = (*infiles)->width;
+        DBG("process image with h=%d, w=%d", h, w);
+        if(hmin > h) hmin = h;
+        if(wmin > w) wmin = w;
+    }
+    if(minh) *minh = hmin;
+    if(minw) *minw = wmin;
+    DBG("minimal sizes: %dx%d", wmin, hmin);
 }
 
 /**
  * Calculate sum of images in list
  */
 static IMAGE* math_sum(IMAGE **infiles){
-	FNAME();
-	if(!infiles || !*infiles) return NULL;
-	int h, w;
-	get_minsizes(&h, &w, infiles);
-	IMAGE *outp = newFITS(h, w, DOUBLE_IMG);
-	double *odata = outp->data;
-	while(*infiles){
-		IMAGE *in = *infiles;
-		int y, oriW = in->width;
-		DBG("process file with W=%d", oriW);
-		OMP_FOR(shared(in, odata))
-		for(y = 0; y < h; ++y){
-			int x;
-			double *iptr = &in->data[oriW*y], *optr = &odata[w*y];
-			for(x = 0; x < w; ++x)
-				*(optr++) += *(iptr++);
-		}
-		++infiles;
-	}
-	DBG("OK");
-	return outp;
+    FNAME();
+    if(!infiles || !*infiles) return NULL;
+    int h, w;
+    get_minsizes(&h, &w, infiles);
+    IMAGE *outp = newFITS(h, w, DOUBLE_IMG);
+    double *odata = outp->data;
+    while(*infiles){
+        IMAGE *in = *infiles;
+        int y, oriW = in->width;
+        DBG("process file with W=%d", oriW);
+        OMP_FOR(shared(in, odata))
+        for(y = 0; y < h; ++y){
+            int x;
+            double *iptr = &in->data[oriW*y], *optr = &odata[w*y];
+            for(x = 0; x < w; ++x)
+                *(optr++) += *(iptr++);
+        }
+        ++infiles;
+    }
+    DBG("OK");
+    return outp;
+}
+
+/**
+ * Calculate difference of images in list
+ */
+static IMAGE* math_diff(IMAGE **infiles){
+    FNAME();
+    if(!infiles || !*infiles) return NULL;
+    int h, w, y, oriW;
+    get_minsizes(&h, &w, infiles);
+    if((*infiles)->height != h || (*infiles)->width != w){
+        /// Файлы должны иметь одинаковые размеры, либо первый должен быть наименьшим
+        ERRX(_("Files should have equal sizes or first file should be least"));
+    }
+    IMAGE *outp = newFITS(h, w, DOUBLE_IMG);
+    // copy data from first file (type should be double!)
+    IMAGE *in = *infiles;
+    oriW = in->width;
+    double *odata = outp->data;
+    OMP_FOR(shared(in, odata))
+    for(y = 0; y < h; ++y){
+        double *iptr = &in->data[oriW*y], *optr = &odata[w*y];
+        memcpy(optr, iptr, w*sizeof(double));
+    }
+    ++infiles;
+    /// Укажите не меньше двух имен файлов
+    if(!*infiles) ERRX(_("Point at least two files"));
+    while(*infiles){
+        in = *infiles;
+        oriW = in->width;
+        DBG("process file with W=%d", oriW);
+        OMP_FOR(shared(in, odata))
+        for(y = 0; y < h; ++y){
+            int x;
+            double *iptr = &in->data[oriW*y], *optr = &odata[w*y];
+            for(x = 0; x < w; ++x)
+                *(optr++) -= *(iptr++);
+        }
+        ++infiles;
+    }
+    DBG("OK");
+    return outp;
 }
 
 static IMAGE* math_mean(IMAGE **infiles){
-	FNAME();
-	IMAGE *out = math_sum(infiles);
-	if(!out) return NULL;
-	double images_amount = 1.;
-	while(*(++infiles)) ++images_amount;
-	double *odata = out->data;
-	int y, h = out->height, w = out->width;
-	OMP_FOR(shared(odata))
-	for(y = 0; y < h; ++y){
-		int x;
-		double *optr = &odata[w*y];
-		for(x = 0; x < w; ++x)
-			*(optr++) /= images_amount;
-	}
-	return out;
+    FNAME();
+    IMAGE *out = math_sum(infiles);
+    if(!out) return NULL;
+    double images_amount = 1.;
+    while(*(++infiles)) ++images_amount;
+    double *odata = out->data;
+    int y, h = out->height, w = out->width;
+    OMP_FOR(shared(odata))
+    for(y = 0; y < h; ++y){
+        int x;
+        double *optr = &odata[w*y];
+        for(x = 0; x < w; ++x)
+            *(optr++) /= images_amount;
+    }
+    return out;
 }
 
 static IMAGE* math_median(IMAGE **infiles){
-	FNAME();
-	if(!infiles || !*infiles) return NULL;
-	int images_amount = 1;
-	IMAGE **f = infiles;
-	while(*(++f)) ++images_amount;
-	if(images_amount < 2){
-		/// Не могу вычислить медиану меньше чем для двух изображений
-		ERRX(_("Can't calculate median for less than two images"));
-	}
-	int h, w, y;
-	get_minsizes(&h, &w, infiles);
-	IMAGE *out = newFITS(h, w, DOUBLE_IMG);
-	double *odata = out->data;
-	double *idata = MALLOC(double, OMP_NUM_THREADS * images_amount);
-	OMP_FOR(shared(odata, idata))
-	for(y = 0; y < h; ++y){
-		int x, N;
-		double *optr = &odata[w*y];
-		double *inp = &idata[images_amount * omp_get_thread_num()];
-		for(x = 0; x < w; ++x){
-			for(N = 0; N < images_amount; ++N){
-				inp[N] = infiles[N]->data[infiles[N]->width * y + x];
-			}
-			*(optr++) = calc_median(inp, images_amount);
-		}
-	}
-	FREE(idata);
-	return out;
+    FNAME();
+    if(!infiles || !*infiles) return NULL;
+    int images_amount = 1;
+    IMAGE **f = infiles;
+    while(*(++f)) ++images_amount;
+    if(images_amount < 2){
+        /// Не могу вычислить медиану меньше чем для двух изображений
+        ERRX(_("Can't calculate median for less than two images"));
+    }
+    int h, w, y;
+    get_minsizes(&h, &w, infiles);
+    IMAGE *out = newFITS(h, w, DOUBLE_IMG);
+    double *odata = out->data;
+    double *idata = MALLOC(double, OMP_NUM_THREADS * images_amount);
+    OMP_FOR(shared(odata, idata))
+    for(y = 0; y < h; ++y){
+        int x, N;
+        double *optr = &odata[w*y];
+        double *inp = &idata[images_amount * omp_get_thread_num()];
+        for(x = 0; x < w; ++x){
+            for(N = 0; N < images_amount; ++N){
+                inp[N] = infiles[N]->data[infiles[N]->width * y + x];
+            }
+            *(optr++) = calc_median(inp, images_amount);
+        }
+    }
+    FREE(idata);
+    return out;
 }
 
 IMAGE *make_group_operation(int names_amount, char **names, MathOper oper){
-	FNAME();
-	char buf[80];
-	mathfuncptr anoper = NULL;
-	KeyList *list = NULL;
-	switch(oper){
-		case MATH_SUM:
-			anoper = math_sum;
-			snprintf(buf, 80, "COMMENT math sum for next files:");
-			list_add_record(&list, buf);
-		break;
-		case MATH_MEAN:
-			anoper = math_mean;
-			snprintf(buf, 80, "COMMENT math mean for next files:");
-			list_add_record(&list, buf);
-		break;
-		case MATH_MEDIAN:
-			anoper = math_median;
-			snprintf(buf, 80, "COMMENT image-by-image median for next files:");
-			list_add_record(&list, buf);
-		break;
-		case MATH_NONE:
-		default:
-			/// Неизвестная групповая операция
-			ERRX(_("Unknown group operation"));
-		break;
-	}
-	// now fill list of files
-	IMAGE **filelist = MALLOC(IMAGE*, names_amount + 1); // +1 for terminated NULL
-	int i, ctr = 0;
-	for(i = 0; i < names_amount; ++i){
-		if(!readFITS(names[i], &filelist[i])){
-			/// Не могу прочесть файл %s из последовательности
-			WARNX(_("Can't read file %s from sequence"), names[i]);
-		}else{
-			++ctr;
-			snprintf(buf, 80, "COMMENT %d: %s", ctr, names[i]);
-			list_add_record(&list, buf);
-		}
-	}
-	if(ctr < 2){
-		/// Количество доступных файлов меньше двух
-		ERRX(_("The amount of available files less than two"));
-	}
-	IMAGE *ret = anoper(filelist);
-	if(ret) ret->keylist = list;
-	// free filelist
-	for(i = 0; i < ctr; ++i) imfree(&filelist[i]);
-	FREE(filelist);
-	return ret;
+    FNAME();
+    char buf[80];
+    mathfuncptr anoper = NULL;
+    KeyList *list = NULL;
+    switch(oper){
+        case MATH_SUM:
+            anoper = math_sum;
+            snprintf(buf, 80, "COMMENT math sum for next files:");
+            list_add_record(&list, buf);
+        break;
+        case MATH_DIFF:
+            anoper = math_diff;
+            snprintf(buf, 80, "COMMENT math difference for first and rest of files:");
+            list_add_record(&list, buf);
+        break;
+        case MATH_MEAN:
+            anoper = math_mean;
+            snprintf(buf, 80, "COMMENT math mean for next files:");
+            list_add_record(&list, buf);
+        break;
+        case MATH_MEDIAN:
+            anoper = math_median;
+            snprintf(buf, 80, "COMMENT image-by-image median for next files:");
+            list_add_record(&list, buf);
+        break;
+        case MATH_NONE:
+        default:
+            /// Неизвестная групповая операция
+            ERRX(_("Unknown group operation"));
+        break;
+    }
+    // now fill list of files
+    IMAGE **filelist = MALLOC(IMAGE*, names_amount + 1); // +1 for terminated NULL
+    int i, ctr = 0;
+    for(i = 0; i < names_amount; ++i){
+        if(!readFITS(names[i], &filelist[i])){
+            /// Не могу прочесть файл %s из последовательности
+            WARNX(_("Can't read file %s from sequence"), names[i]);
+        }else{
+            ++ctr;
+            snprintf(buf, 80, "COMMENT %d: %s", ctr, names[i]);
+            list_add_record(&list, buf);
+        }
+    }
+    if(ctr < 2){
+        /// Количество доступных файлов меньше двух
+        ERRX(_("The amount of available files less than two"));
+    }
+    IMAGE *ret = anoper(filelist);
+    if(ret) ret->keylist = list;
+    // free filelist
+    for(i = 0; i < ctr; ++i) imfree(&filelist[i]);
+    FREE(filelist);
+    return ret;
 }

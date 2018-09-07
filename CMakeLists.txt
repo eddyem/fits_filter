@@ -27,75 +27,48 @@ set(CMAKE_COLOR_MAKEFILE ON)
 
 # here is one of two variants: all .c in directory or .c files in list
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} SOURCES)
-#list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/<file to remove>)
-#set(SOURCES list_of_c_files)
-
-# we can change file list
-#if(NOT DEFINED something)
-#	set(SOURCES ${SOURCES} one_more_list)
-#	add_definitions(-DSOME_DEFS)
-#endif()
 
 # cmake -DDEBUG=1 -> debugging
 if(DEFINED DEBUG)
-	add_definitions(-DEBUG)
+    add_definitions(-DEBUG)
 endif()
 
 # directory should contain dir locale/ru for gettext translations
 set(LCPATH ${CMAKE_SOURCE_DIR}/locale/ru)
 
 if(NOT DEFINED LOCALEDIR)
-	if(DEFINED DEBUG)
-		set(LOCALEDIR ${CMAKE_CURRENT_SOURCE_DIR}/locale)
-	else()
-		set(LOCALEDIR ${CMAKE_INSTALL_PREFIX}/share/locale)
-	endif()
+    if(DEFINED DEBUG)
+        set(LOCALEDIR ${CMAKE_CURRENT_SOURCE_DIR}/locale)
+    else()
+        set(LOCALEDIR ${CMAKE_INSTALL_PREFIX}/share/locale)
+    endif()
 endif()
 
 ###### pkgconfig ######
 # pkg-config modules (for pkg-check-modules)
 set(MODULES cfitsio fftw3)
-# additional modules on condition
-#if(DEFINED SOMETHING)
-#	set(MODULES ${MODULES} more_modules>=version)
-#	add_definitions(-DSOMEDEFS)
-#endif()
+
 # find packages:
 find_package(PkgConfig REQUIRED)
-# non-required
-#find_package(<pkg1>)
+
 pkg_check_modules(${PROJ} REQUIRED ${MODULES})
 
 # external modules like OpenMP:
 include(FindOpenMP)
 if(OPENMP_FOUND)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-	add_definitions(-DOMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    add_definitions(-DOMP_FOUND)
 endif()
-
-# append data from find_package:
-#list(APPEND ${PROJ}_INCLUDE_DIRS ${<pkg1>_INCLUDE_DIR} ${<pkg2>_INCLUDE_DIR})
-#list(APPEND ${PROJ}_LIBRARIES ${<pkg1>_LIBRARY} ${<pkg2>_LIBRARY})
-#list(APPEND ${${PROJ}_LIBRARY_DIRS}  ${<pkg1>_LIBRARY_DIRS})
 
 ###### additional flags ######
 list(APPEND ${PROJ}_LIBRARIES "-lfftw3_threads")
-# conditional check:
-#if(NOT DEFINED NO_GSL)
-#	pkg_check_modules(GSL gsl)
-#endif()
-#if(NOT DEFINED GSL_VERSION)
-#	message("GSL not found, some mathematics functions wouldn't be avialable")
-#else()
-#	add_definitions(-DGSL_FOUND)
-#endif()
 
 project(${PROJ})
 # change wrong behaviour with install prefix
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT AND CMAKE_INSTALL_PREFIX MATCHES "/usr/local")
-	message("Change default install path to /usr")
-	set(CMAKE_INSTALL_PREFIX "/usr")
+    message("Change default install path to /usr")
+    set(CMAKE_INSTALL_PREFIX "/usr")
 endif()
 message("Install dir prefix: ${CMAKE_INSTALL_PREFIX}")
 
@@ -103,31 +76,19 @@ message("Install dir prefix: ${CMAKE_INSTALL_PREFIX}")
 set(PO_FILE ${LCPATH}/messages.po)
 set(MO_FILE ${LCPATH}/LC_MESSAGES/${PROJ}.mo)
 set(RU_FILE ${LCPATH}/ru.po)
+set(CTAGS_FILE ${CMAKE_SOURCE_DIR}/${PROJ}.c.tags)
 
 # exe file
 add_executable(${PROJ} ${SOURCES})
-# ${PO_FILE} ${MO_FILE})
-# another exe, depending on some other files
-#add_executable(test_client client.c usefull_macros.c parceargs.c)
 # -I
 include_directories(${${PROJ}_INCLUDE_DIRS})
 # -L
 link_directories(${${PROJ}_LIBRARY_DIRS})
 # -D
 add_definitions(${CFLAGS} -DLOCALEDIR=\"${LOCALEDIR}\"
-		-DPACKAGE_VERSION=\"${VERSION}\" -DGETTEXT_PACKAGE=\"${PROJ}\"
-		-DMINOR_VERSION=\"${MINOR_VERSION}\" -DMID_VERSION=\"${MID_VERSION}\"
-		-DMAJOR_VERSION=\"${MAJOR_VESION}\")
-
-###### pthreads ######
-#find_package(Threads REQUIRED)
-#if(THREADS_HAVE_PTHREAD_ARG)
-#  set_property(TARGET ${PROJ} PROPERTY COMPILE_OPTIONS "-pthread")
-#  set_property(TARGET ${PROJ} PROPERTY INTERFACE_COMPILE_OPTIONS "-pthread")
-#endif()
-#if(CMAKE_THREAD_LIBS_INIT)
-#  list(APPEND ${PROJ}_LIBRARIES "${CMAKE_THREAD_LIBS_INIT}")
-#endif()
+        -DPACKAGE_VERSION=\"${VERSION}\" -DGETTEXT_PACKAGE=\"${PROJ}\"
+        -DMINOR_VERSION=\"${MINOR_VERSION}\" -DMID_VERSION=\"${MID_VERSION}\"
+        -DMAJOR_VERSION=\"${MAJOR_VESION}\")
 
 # -l
 target_link_libraries(${PROJ} ${${PROJ}_LIBRARIES} -lm)
@@ -136,42 +97,44 @@ target_link_libraries(${PROJ} ${${PROJ}_LIBRARIES} -lm)
 INSTALL(FILES ${MO_FILE} DESTINATION "share/locale/ru/LC_MESSAGES")
         #PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ WORLD_READ)
 INSTALL(TARGETS ${PROJ} DESTINATION "bin")
-        #PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-# Script to be executed at installation time (kind of post-intallation script) to
-# change the right accesses on the installed files
-#INSTALL(SCRIPT inst.cmake)
 
-###### gettext ######
-find_package(Gettext REQUIRED)
-find_program(GETTEXT_XGETTEXT_EXECUTABLE xgettext)
-if(NOT GETTEXT_XGETTEXT_EXECUTABLE OR NOT GETTEXT_MSGFMT_EXECUTABLE)
-	message(FATAL_ERROR "xgettext not found")
+###### gettext & ctags ######
+if(DEFINED EBUG)
+    message("Generate locale & tags files")
+    find_package(Gettext REQUIRED)
+    find_program(GETTEXT_XGETTEXT_EXECUTABLE xgettext)
+    if(NOT GETTEXT_XGETTEXT_EXECUTABLE OR NOT GETTEXT_MSGFMT_EXECUTABLE)
+        message(FATAL_ERROR "xgettext not found")
+    endif()
+    file(MAKE_DIRECTORY ${LCPATH})
+    file(MAKE_DIRECTORY ${LCPATH}/LC_MESSAGES)
+
+    add_custom_command(
+        OUTPUT ${PO_FILE}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND ${GETTEXT_XGETTEXT_EXECUTABLE} --from-code=utf-8 ${SOURCES} -c -k_ -kN_ -o ${PO_FILE}
+        COMMAND sed -i 's/charset=.*\\\\n/charset=koi8-r\\\\n/' ${PO_FILE}
+        COMMAND enconv ${PO_FILE}
+        DEPENDS ${SOURCES}
+    )
+    # we need this to prevent ru.po & .mo from deleting by make clean
+    add_custom_target(
+        RU_FILE
+        COMMAND [ -f ${RU_FILE} ] && ${GETTEXT_MSGMERGE_EXECUTABLE} -Uis ${RU_FILE} ${PO_FILE} || cp ${PO_FILE} ${RU_FILE}
+        DEPENDS ${PO_FILE} ${SOURCES}
+    )
+    add_custom_target(
+        MO_FILE
+        COMMAND make RU_FILE && ${GETTEXT_MSGFMT_EXECUTABLE} ${RU_FILE} -o ${MO_FILE}
+        DEPENDS ${SOURCES}
+    )
+    add_dependencies(${PROJ} MO_FILE)
+
+    set(CFLAGS_A CFLAGS=${CFLAGS})
+    add_custom_target(ctags
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND CFLAGS=-DEBUG geany -g ${CTAGS_FILE} ${SOURCES}
+        DEPENDS ${SOURCES}
+    )
+    add_dependencies(${PROJ} ctags)
 endif()
-file(MAKE_DIRECTORY ${LCPATH})
-file(MAKE_DIRECTORY ${LCPATH}/LC_MESSAGES)
-
-add_custom_command(
-	OUTPUT ${PO_FILE}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${GETTEXT_XGETTEXT_EXECUTABLE} --from-code=utf-8 ${SOURCES} -c -k_ -kN_ -o ${PO_FILE}
-	COMMAND sed -i 's/charset=.*\\\\n/charset=koi8-r\\\\n/' ${PO_FILE}
-	COMMAND enconv ${PO_FILE}
-	DEPENDS ${SOURCES}
-)
-
-# we need this to prewent ru.po & .mo from deleting by make clean
-add_custom_command(
-	OUTPUT ${MO_FILE}
-	COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} ${RU_FILE} -o ${MO_FILE}
-	DEPENDS ${RU_FILE} ru_file_updated
-)
-
-add_custom_command(
-	OUTPUT ru_file_updated
-	COMMAND [ -f ${RU_FILE} ] && ${GETTEXT_MSGMERGE_EXECUTABLE} -Uis ${RU_FILE} ${PO_FILE} || cp ${PO_FILE} ${RU_FILE}
-	COMMAND ${CMAKE_COMMAND} -E touch ru_file_updated
-	BYPRODUCTS ${RU_FILE}
-	DEPENDS ${PO_FILE}
-)
-
-add_custom_target(MO_FILE ALL DEPENDS ${MO_FILE})

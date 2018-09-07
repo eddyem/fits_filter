@@ -24,7 +24,7 @@
 #include "fits.h"
 
 #ifndef THREAD_NUMBER
-	#define THREAD_NUMBER 4		// default - 4 threads
+    #define THREAD_NUMBER 4     // default - 4 threads
 #endif
 
 #ifndef DBL_EPSILON
@@ -49,42 +49,43 @@
 
 // FilterType (not only convolution!)
 typedef enum{
-	FILTER_NONE = 0		// simple start
-	,MEDIAN				// median filter
-	,ADPT_MEDIAN		// simple adaptive median
-	,LAPGAUSS			// laplasian of gaussian
-	,GAUSS				// gaussian
-	,SOBELH				// Sobel horizontal
-	,SOBELV				// -//- vertical
-	,SIMPLEGRAD			// simple gradient (by Sobel)
-	,PREWITTH			// Prewitt (horizontal) - simple derivative
-	,PREWITTV			// -//- (vertical)
-	,SCHARRH			// Scharr (modified Sobel)
-	,SCHARRV
-	,STEP				// "posterisation"
+    FILTER_NONE = 0     // simple start
+    ,MEDIAN             // median filter
+    ,ADPT_MEDIAN        // simple adaptive median
+    ,LAPGAUSS           // laplasian of gaussian
+    ,GAUSS              // gaussian
+    ,SOBELH             // Sobel horizontal
+    ,SOBELV             // -//- vertical
+    ,SIMPLEGRAD         // simple gradient (by Sobel)
+    ,PREWITTH           // Prewitt (horizontal) - simple derivative
+    ,PREWITTV           // -//- (vertical)
+    ,SCHARRH            // Scharr (modified Sobel)
+    ,SCHARRV
+    ,STEP               // "posterisation"
 } FType;
 
 typedef struct{
-	Item *data;
-	size_t size;
+    Item *data;
+    size_t size;
 }Itmarray;
 
 typedef struct _Filter{
-	char *name;			// filter name
-	FType FilterType;	// filter type
-	int w;				// filter width
-	int h;				// height
-	double sx;			// x half-width
-	double sy;			// y half-width (sx, sy - for Gaussian-type filters)
-	IMAGE* (*imfunc)(IMAGE *in, struct _Filter *f, Itmarray *i);	// image function for given conversion type
+    char *name;         // filter name
+    FType FilterType;   // filter type
+    int w;              // filter width
+    int h;              // height
+    double sx;          // x half-width
+    double sy;          // y half-width (sx, sy - for Gaussian-type filters)
+    IMAGE* (*imfunc)(IMAGE *in, struct _Filter *f, Itmarray *i);    // image function for given conversion type
 } Filter;
 
 // mathematical operations when there's no '-i' parameter (for >1 FITS-files)
 typedef enum{
-	MATH_NONE = 0
-	,MATH_SUM           // make sum of all files
-	,MATH_MEDIAN        // calculate median by all files
-	,MATH_MEAN          // calculate mean for all files
+    MATH_NONE = 0
+    ,MATH_SUM           // make sum of all files
+    ,MATH_MEDIAN        // calculate median by all files
+    ,MATH_MEAN          // calculate mean for all files
+    ,MATH_DIFF          // difference of first and rest files
 } MathOper;
 
 // pointer to image conversion function
