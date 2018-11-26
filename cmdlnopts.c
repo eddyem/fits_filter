@@ -167,6 +167,7 @@ bool get_radians(double *ret, char *str){
     switch(*str){ // check sign
         case '-':
             sign = -1.;
+        __attribute__ ((fallthrough));
         case '+':
             str++;
     }

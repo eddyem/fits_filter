@@ -108,7 +108,8 @@ int main(int argc, char **argv){
     }
     if(!G.outfile){ // user didn't write out file name - check for prefix
         if(inplace){ // G.outfile is the same as G.infile
-            G.outfile = G.infile;
+            G.outfile = malloc(strlen(G.infile)+1);
+            sprintf(G.outfile, "!%s", G.infile);
         }else if(!show_stat && !G.listabs){
             if(!G.rest_pars_num){
                 /// "Задайте имя выходного файла (-o) или его префикс (без ключа)"
